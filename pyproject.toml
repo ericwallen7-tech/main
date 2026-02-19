@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "music-metadata-updater"
+version = "0.1.0"
+description = "Update music file metadata and pull in album artwork from online sources"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mutagen>=1.47.0",
+    "requests>=2.31.0",
+    "Pillow>=10.0.0",
+    "rich>=13.0.0",
+    "click>=8.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "responses>=0.24.0",
+]
+
+[project.scripts]
+music-update = "music_updater.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --cov=music_updater --cov-report=term-missing"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["music_updater*"]
