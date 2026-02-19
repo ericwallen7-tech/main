@@ -7,114 +7,134 @@
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <div id="app">
+  <div id="win-frame">
 
-    <!-- ── Sidebar ─────────────────────────────────────────────── -->
-    <aside id="sidebar">
-      <div id="sidebar-logo">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+    <!-- ── Title Bar ──────────────────────────────────────────── -->
+    <div id="win-titlebar">
+      <div id="win-title">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
           <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/>
         </svg>
-        <span>Music</span>
+        Music Library
       </div>
-
-      <nav id="sidebar-nav">
-        <ul>
-          <li class="nav-item active" data-view="library" tabindex="0">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-              <path d="M20 2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM8 4h12v12H8V4zM4 6H2v14a2 2 0 0 0 2 2h14v-2H4V6z"/>
-            </svg>
-            Library
-          </li>
-        </ul>
-
-        <div class="section-header">
-          <span>Playlists</span>
-          <button id="btn-new-playlist" title="New playlist">+</button>
-        </div>
-
-        <ul id="playlist-list">
-          <!-- populated by app.js -->
-        </ul>
-      </nav>
-
-      <!-- Scan bar -->
-      <div id="scan-bar">
-        <input id="scan-path" type="text" placeholder="/path/to/music …" />
-        <button id="btn-scan">Scan</button>
+      <div id="win-controls">
+        <button class="win-btn" title="Minimize">_</button>
+        <button class="win-btn" title="Maximize">□</button>
+        <button class="win-btn" title="Close">✕</button>
       </div>
-      <div id="scan-status"></div>
-    </aside>
+    </div>
 
-    <!-- ── Main content ──────────────────────────────────────────── -->
-    <main id="main">
-      <div id="toolbar">
-        <div id="search-wrap">
+    <!-- ── App ───────────────────────────────────────────────── -->
+    <div id="app">
+
+      <!-- ── Sidebar ─────────────────────────────────────────── -->
+      <aside id="sidebar">
+        <div id="sidebar-logo">
           <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-            <path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/>
           </svg>
-          <input id="search-input" type="text" placeholder="Search tracks, artists, albums…" />
-          <button id="btn-clear-search" title="Clear">✕</button>
+          <span>My Music</span>
         </div>
-        <span id="track-count"></span>
-      </div>
 
-      <div id="track-list-container">
-        <table id="track-table">
-          <thead>
-            <tr>
-              <th class="col-num">#</th>
-              <th class="col-art"></th>
-              <th class="col-title">Title</th>
-              <th class="col-artist">Artist</th>
-              <th class="col-album">Album</th>
-              <th class="col-year">Year</th>
-              <th class="col-dur">Duration</th>
-              <th class="col-actions"></th>
-            </tr>
-          </thead>
-          <tbody id="track-tbody"></tbody>
-        </table>
+        <nav id="sidebar-nav">
+          <ul>
+            <li class="nav-item active" data-view="library" tabindex="0">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+                <path d="M20 2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM8 4h12v12H8V4zM4 6H2v14a2 2 0 0 0 2 2h14v-2H4V6z"/>
+              </svg>
+              Library
+            </li>
+          </ul>
 
-        <div id="empty-state" class="hidden">
-          <p>No tracks found.</p>
-          <p class="hint">Scan a music folder using the input in the sidebar.</p>
+          <div class="section-header">
+            <span>Playlists</span>
+            <button id="btn-new-playlist" title="New playlist">+</button>
+          </div>
+
+          <ul id="playlist-list">
+            <!-- populated by app.js -->
+          </ul>
+        </nav>
+
+        <!-- Scan bar -->
+        <div id="scan-bar">
+          <input id="scan-path" type="text" placeholder="C:\Music …" />
+          <button id="btn-scan">Scan</button>
+        </div>
+        <div id="scan-status"></div>
+      </aside>
+
+      <!-- ── Main content ──────────────────────────────────────── -->
+      <main id="main">
+        <div id="toolbar">
+          <div id="search-wrap">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+              <path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            <input id="search-input" type="text" placeholder="Search tracks, artists, albums…" />
+            <button id="btn-clear-search" title="Clear">✕</button>
+          </div>
+          <span id="track-count"></span>
+        </div>
+
+        <div id="track-list-container">
+          <table id="track-table">
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th class="col-art"></th>
+                <th class="col-title">Title</th>
+                <th class="col-artist">Artist</th>
+                <th class="col-album">Album</th>
+                <th class="col-year">Year</th>
+                <th class="col-dur">Duration</th>
+                <th class="col-actions"></th>
+              </tr>
+            </thead>
+            <tbody id="track-tbody"></tbody>
+          </table>
+
+          <div id="empty-state" class="hidden">
+            <p>No tracks found.</p>
+            <p class="hint">Scan a music folder using the input in the sidebar.</p>
+          </div>
+        </div>
+      </main>
+
+    </div><!-- /#app -->
+
+    <!-- ── Now-playing bar ──────────────────────────────────────── -->
+    <footer id="now-playing">
+      <div id="np-left">
+        <img id="np-art" src="" alt="" />
+        <div id="np-meta">
+          <div id="np-title">—</div>
+          <div id="np-artist">—</div>
         </div>
       </div>
-    </main>
 
-  </div><!-- /#app -->
-
-  <!-- ── Now-playing bar ──────────────────────────────────────── -->
-  <footer id="now-playing">
-    <div id="np-left">
-      <img id="np-art" src="" alt="" />
-      <div id="np-meta">
-        <div id="np-title">—</div>
-        <div id="np-artist">—</div>
+      <div id="np-center">
+        <div id="np-buttons">
+          <button id="btn-prev" title="Previous">⏮</button>
+          <button id="btn-play" title="Play / Pause" class="btn-play-main">▶</button>
+          <button id="btn-next" title="Next">⏭</button>
+        </div>
+        <div id="np-progress">
+          <span id="np-cur">0:00</span>
+          <input id="seek-bar" type="range" min="0" max="1000" value="0" />
+          <span id="np-dur">0:00</span>
+        </div>
       </div>
-    </div>
 
-    <div id="np-center">
-      <div id="np-buttons">
-        <button id="btn-prev" title="Previous">⏮</button>
-        <button id="btn-play" title="Play / Pause" class="btn-play-main">▶</button>
-        <button id="btn-next" title="Next">⏭</button>
+      <div id="np-right">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+        </svg>
+        <input id="vol-bar" type="range" min="0" max="100" value="80" />
       </div>
-      <div id="np-progress">
-        <span id="np-cur">0:00</span>
-        <input id="seek-bar" type="range" min="0" max="1000" value="0" />
-        <span id="np-dur">0:00</span>
-      </div>
-    </div>
+    </footer>
 
-    <div id="np-right">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-      </svg>
-      <input id="vol-bar" type="range" min="0" max="100" value="80" />
-    </div>
-  </footer>
+  </div><!-- /#win-frame -->
 
   <!-- Context menu for "add to playlist" -->
   <div id="ctx-menu" class="hidden">
