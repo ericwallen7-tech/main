@@ -277,3 +277,40 @@ def scan_dir(directory: str, recursive: bool) -> None:
 
 # Alias for the CLI entry point
 main.add_command(scan_dir, name="scan")
+
+
+# ---------------------------------------------------------------------------
+# serve
+# ---------------------------------------------------------------------------
+
+
+@main.command()
+@click.option("--host", default="127.0.0.1", show_default=True, help="Bind address")
+@click.option("--port", "-p", default=8000, show_default=True, help="Port to listen on")
+@click.option("--reload", is_flag=True, default=False, help="Enable auto-reload (dev mode)")
+def serve(host: str, port: int, reload: bool) -> None:
+    """Start the web UI and music player server.
+
+    Open http://HOST:PORT in your browser after starting.
+    Use the Scan input in the sidebar to index your music folder.
+    """
+    try:
+        import uvicorn
+    except ImportError:
+        err_console.print(
+            "[red]uvicorn is not installed.[/] Run: [bold]pip install uvicorn[standard][/]"
+        )
+        raise SystemExit(1)
+
+    console.print(
+        f"\n[bold green]Music Library[/] is running at "
+        f"[underline]http://{host}:{port}[/]\n"
+        "Press [bold]Ctrl+C[/] to stop.\n"
+    )
+    uvicorn.run(
+        "music_updater.server:app",
+        host=host,
+        port=port,
+        reload=reload,
+        log_level="warning",
+    )
