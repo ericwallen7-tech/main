@@ -9,397 +9,675 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:       #0f0f0f;
-  --sidebar:  #141414;
-  --surface:  #1a1a1a;
-  --surface2: #222;
-  --border:   #2a2a2a;
-  --accent:   #1ed760;
-  --accent-d: #17a84a;
-  --text:     #ffffff;
-  --muted:    #a0a0a0;
-  --danger:   #e05252;
-  --bar-h:    72px;
-  --sidebar-w: 240px;
-  --radius:   6px;
+  --face:       #c0c0c0;
+  --desktop:    #008080;
+  --title-bg:   #000080;
+  --title-grad: #1084d0;
+  --text:       #000000;
+  --white:      #ffffff;
+  --hi-bg:      #000080;
+  --hi-text:    #ffffff;
+  --shadow:     #808080;
+  --dk-shadow:  #404040;
+  --highlight:  #dfdfdf;
+  --bar-h:      80px;
+  --sidebar-w:  180px;
+  --title-h:    26px;
 }
 
 html, body {
   height: 100%;
-  background: var(--bg);
+  background: var(--desktop);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
   overflow: hidden;
 }
 
+/* ── Win Frame ────────────────────────────────────────────────── */
+#win-frame {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--face);
+  border: 2px solid var(--dk-shadow);
+  box-shadow: inset 1px 1px 0 var(--white), inset -1px -1px 0 var(--shadow);
+}
+
+/* ── Preview Banner ───────────────────────────────────────────── */
+#preview-banner {
+  flex-shrink: 0;
+  background: #ffff80;
+  border-bottom: 1px solid var(--dk-shadow);
+  color: #000000;
+  font-size: 11px;
+  text-align: center;
+  padding: 3px 12px;
+}
+#preview-banner code {
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  background: #e8e8e0;
+  border: 1px solid var(--shadow);
+  padding: 0 3px;
+}
+
+/* ── Title Bar ────────────────────────────────────────────────── */
+#win-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--title-h);
+  background: linear-gradient(to right, var(--title-bg), var(--title-grad));
+  padding: 2px 4px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+#win-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+#win-controls {
+  display: flex;
+  gap: 2px;
+}
+
+.win-btn {
+  width: 16px;
+  height: 14px;
+  background: var(--face);
+  color: var(--text);
+  font-size: 9px;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow);
+}
+.win-btn:active {
+  border-color: var(--dk-shadow) var(--white) var(--white) var(--dk-shadow);
+  box-shadow: inset 1px 1px 0 var(--shadow), inset -1px -1px 0 var(--highlight);
+}
+
+/* ── App Grid ─────────────────────────────────────────────────── */
 #app {
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
-  grid-template-rows: calc(100vh - var(--bar-h));
-  height: calc(100vh - var(--bar-h));
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* ── Sidebar ──────────────────────────────────────────────────── */
 #sidebar {
-  grid-column: 1; grid-row: 1;
-  background: var(--sidebar);
-  border-right: 1px solid var(--border);
-  display: flex; flex-direction: column; overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--face);
+  border-right: 1px solid var(--shadow);
 }
 
 #sidebar-logo {
-  display: flex; align-items: center; gap: 10px;
-  padding: 20px 16px 12px;
-  font-size: 18px; font-weight: 700; color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font-weight: bold;
+  font-size: 11px;
+  color: var(--text);
+  border-bottom: 1px solid var(--shadow);
   flex-shrink: 0;
 }
 
-#sidebar-nav { flex: 1; overflow-y: auto; padding-bottom: 8px; }
+#sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2px 0;
+}
 
 .nav-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 16px; cursor: pointer; color: var(--muted);
-  border-radius: var(--radius); margin: 2px 8px; font-weight: 500;
-  transition: background 0.15s, color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  color: var(--text);
+  user-select: none;
 }
-.nav-item:hover  { background: var(--surface2); color: var(--text); }
-.nav-item.active { background: var(--surface2); color: var(--text); }
+.nav-item:hover  { background: var(--hi-bg); color: var(--hi-text); }
+.nav-item.active { background: var(--hi-bg); color: var(--hi-text); }
+.nav-item:hover svg, .nav-item.active svg { color: var(--hi-text); }
 
 .section-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px 4px;
-  font-size: 11px; font-weight: 700; letter-spacing: .08em;
-  text-transform: uppercase; color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px 2px;
+  font-weight: bold;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  border-top: 1px solid var(--shadow);
+  margin-top: 4px;
 }
 
 #btn-new-playlist {
-  background: none; border: none; color: var(--muted);
-  font-size: 20px; cursor: pointer; line-height: 1; padding: 0 2px;
-  transition: color 0.15s;
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow);
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  width: 18px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
 }
-#btn-new-playlist:hover { color: var(--accent); }
 
 #playlist-list { list-style: none; }
 
 .pl-item {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 16px; margin: 2px 8px; border-radius: var(--radius);
-  cursor: pointer; color: var(--muted); font-weight: 400;
-  transition: background 0.15s, color 0.15s; gap: 6px;
+  display: flex;
+  align-items: center;
+  padding: 3px 8px;
+  cursor: pointer;
+  color: var(--text);
+  gap: 6px;
+  user-select: none;
 }
-.pl-item:hover            { background: var(--surface2); color: var(--text); }
-.pl-item.active           { background: var(--surface2); color: var(--text); }
-.pl-item .pl-name         { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pl-item .btn-del-pl      { display: none; background: none; border: none; color: var(--danger); cursor: pointer; font-size: 12px; padding: 2px 4px; border-radius: 4px; }
+.pl-item:hover  { background: var(--hi-bg); color: var(--hi-text); }
+.pl-item.active { background: var(--hi-bg); color: var(--hi-text); }
+.pl-item .pl-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pl-item .btn-del-pl {
+  display: none;
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 9px;
+  padding: 0 2px;
+  line-height: 1.4;
+}
 .pl-item:hover .btn-del-pl { display: block; }
 
 #scan-bar {
-  flex-shrink: 0; display: flex; gap: 6px;
-  padding: 12px 10px 4px; border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  gap: 4px;
+  padding: 6px 6px 4px;
+  border-top: 1px solid var(--shadow);
 }
 
 #scan-path {
-  flex: 1; background: var(--surface2); border: 1px solid var(--border);
-  border-radius: var(--radius); color: var(--text); padding: 6px 8px;
-  font-size: 12px; outline: none; min-width: 0;
+  flex: 1;
+  background: var(--white);
+  border-top: 2px solid var(--shadow);
+  border-left: 2px solid var(--shadow);
+  border-bottom: 2px solid var(--highlight);
+  border-right: 2px solid var(--highlight);
+  color: var(--text);
+  padding: 2px 4px;
+  font-size: 11px;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+  outline: none;
+  min-width: 0;
 }
-#scan-path::placeholder { color: var(--muted); }
-#scan-path:focus { border-color: var(--accent); }
 
 #btn-scan {
-  background: var(--accent); color: #000; border: none;
-  border-radius: var(--radius); padding: 6px 10px;
-  font-weight: 700; font-size: 12px; cursor: pointer;
-  white-space: nowrap; flex-shrink: 0;
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow);
+  color: var(--text);
+  padding: 3px 10px;
+  font-size: 11px;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
-#btn-scan:hover { background: var(--accent-d); }
 
-#scan-status { padding: 4px 10px 10px; font-size: 11px; color: var(--muted); min-height: 24px; }
+#scan-status {
+  padding: 2px 6px 6px;
+  font-size: 10px;
+  color: var(--shadow);
+  min-height: 20px;
+  flex-shrink: 0;
+}
 
 /* ── Main ─────────────────────────────────────────────────────── */
-#main { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; overflow: hidden; }
+#main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--white);
+  border-left: 1px solid var(--highlight);
+}
 
 #toolbar {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 20px 10px; flex-shrink: 0; border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--face);
+  border-bottom: 2px solid var(--shadow);
+  flex-shrink: 0;
 }
 
 #search-wrap {
-  flex: 1; display: flex; align-items: center; gap: 8px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 20px; padding: 6px 12px; max-width: 460px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--white);
+  border-top: 2px solid var(--shadow);
+  border-left: 2px solid var(--shadow);
+  border-bottom: 2px solid var(--highlight);
+  border-right: 2px solid var(--highlight);
+  padding: 2px 6px;
+  max-width: 380px;
 }
-#search-wrap svg { flex-shrink: 0; color: var(--muted); }
+#search-wrap svg { color: var(--shadow); flex-shrink: 0; }
 
 #search-input {
-  flex: 1; background: none; border: none; outline: none;
-  color: var(--text); font-size: 14px;
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 11px;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
 }
-#search-input::placeholder { color: var(--muted); }
+#search-input::placeholder { color: var(--shadow); }
 
-#track-count { color: var(--muted); font-size: 12px; white-space: nowrap; }
+#track-count { color: var(--text); font-size: 10px; white-space: nowrap; }
 
-#track-list-container { flex: 1; overflow-y: auto; padding: 0 4px 8px; }
+#track-list-container {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--white);
+  padding: 0;
+}
 
 #track-table { width: 100%; border-collapse: collapse; }
 
 #track-table thead th {
-  position: sticky; top: 0; background: var(--bg);
-  padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 700;
-  letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
-  border-bottom: 1px solid var(--border); z-index: 1;
+  position: sticky;
+  top: 0;
+  background: var(--face);
+  padding: 3px 6px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--text);
+  border-right: 1px solid var(--shadow);
+  border-bottom: 2px solid var(--shadow);
+  z-index: 1;
+  box-shadow: inset 0 1px 0 var(--white), inset 0 -1px 0 var(--dk-shadow), inset 1px 0 0 var(--white);
 }
+#track-table thead th:last-child { border-right: none; }
 
-#track-table tbody tr { cursor: pointer; transition: background 0.1s; }
-#track-table tbody tr:hover   { background: var(--surface); }
-#track-table tbody tr.playing { background: var(--surface2); }
+#track-table tbody tr { cursor: pointer; }
+#track-table tbody tr:nth-child(even) { background: #f4f4f4; }
+#track-table tbody tr:hover   { background: var(--hi-bg); color: var(--hi-text); }
+#track-table tbody tr.playing { background: var(--hi-bg); color: var(--hi-text); }
+
 #track-table tbody td {
-  padding: 7px 10px; vertical-align: middle;
-  border-bottom: 1px solid rgba(255,255,255,.04);
+  padding: 2px 6px;
+  vertical-align: middle;
+  border-bottom: 1px solid #e0e0e0;
+  border-right: 1px solid #e8e8e8;
 }
 
-.col-num    { width: 36px; text-align: right; color: var(--muted); font-size: 12px; }
-.col-art    { width: 44px; }
-.col-title  { min-width: 160px; font-weight: 500; }
-.col-artist { min-width: 120px; color: var(--muted); }
-.col-album  { min-width: 120px; color: var(--muted); }
-.col-year   { width: 60px; color: var(--muted); font-size: 12px; }
-.col-dur    { width: 60px; color: var(--muted); font-size: 12px; text-align: right; }
-.col-actions { width: 36px; text-align: right; }
+#track-table tbody tr:hover td,
+#track-table tbody tr.playing td {
+  color: var(--hi-text);
+  border-bottom-color: var(--hi-bg);
+  border-right-color: var(--hi-bg);
+}
 
+.col-num     { width: 30px; text-align: right; font-size: 11px; }
+.col-art     { width: 32px; padding: 1px 4px !important; }
+.col-title   { min-width: 140px; }
+.col-artist  { min-width: 100px; }
+.col-album   { min-width: 100px; }
+.col-year    { width: 50px; font-size: 11px; }
+.col-dur     { width: 50px; font-size: 11px; text-align: right; }
+.col-actions { width: 60px; text-align: right; }
+
+/* Art thumb — flex div for emoji display in preview */
 .art-thumb {
-  width: 32px; height: 32px; border-radius: 3px; object-fit: cover;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--surface2); font-size: 16px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border: 1px solid var(--shadow);
+  background: var(--face);
 }
 
 .btn-row {
-  background: none; border: 1px solid var(--border); color: var(--muted);
-  border-radius: 4px; padding: 3px 7px; font-size: 12px; cursor: pointer;
-  opacity: 0; transition: opacity 0.1s, color 0.1s;
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow);
+  color: var(--text);
+  padding: 1px 4px;
+  font-size: 10px;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+  cursor: pointer;
+  opacity: 0;
 }
 tr:hover .btn-row, tr.playing .btn-row { opacity: 1; }
-.btn-row:hover { color: var(--text); border-color: var(--text); }
 
-.playing-icon { color: var(--accent); font-size: 14px; display: none; }
+.playing-icon { display: none; font-size: 10px; }
 tr.playing .playing-icon { display: inline; }
 tr.playing .row-num      { display: none; }
 
 /* ── Now-playing bar ──────────────────────────────────────────── */
 #now-playing {
-  position: fixed; bottom: 0; left: 0; right: 0; height: var(--bar-h);
-  background: #181818; border-top: 1px solid var(--border);
-  display: grid; grid-template-columns: 1fr 2fr 1fr;
-  align-items: center; padding: 0 16px; gap: 16px; z-index: 100;
+  height: var(--bar-h);
+  background: var(--face);
+  border-top: 2px solid var(--shadow);
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
+  padding: 4px 12px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
-#np-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+#np-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
 
+/* Art in now-playing — flex div for emoji in preview */
 #np-art {
-  width: 48px; height: 48px; border-radius: 4px; object-fit: cover;
-  background: var(--surface2); flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center; font-size: 22px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  background: var(--face);
+  border: 2px solid;
+  border-color: var(--shadow) var(--highlight) var(--highlight) var(--shadow);
+  flex-shrink: 0;
 }
 
 #np-meta { min-width: 0; }
-#np-title  { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#np-artist { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#np-title  { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+#np-artist { font-size: 10px; color: var(--shadow); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-#np-center { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-#np-buttons { display: flex; align-items: center; gap: 16px; }
+#np-center { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+#np-buttons { display: flex; align-items: center; gap: 4px; }
 
 #np-buttons button {
-  background: none; border: none; color: var(--muted); font-size: 18px;
-  cursor: pointer; transition: color 0.15s; line-height: 1;
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow);
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  width: 30px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
 }
-#np-buttons button:hover { color: var(--text); }
 
 .btn-play-main {
-  font-size: 20px !important; color: #000 !important;
-  background: var(--accent) !important; border-radius: 50% !important;
-  width: 36px; height: 36px;
-  display: flex !important; align-items: center; justify-content: center;
+  width: 38px !important;
+  height: 28px !important;
+  font-size: 14px !important;
 }
 
-#np-progress { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 480px; }
-#np-cur, #np-dur { font-size: 11px; color: var(--muted); width: 36px; flex-shrink: 0; }
+#np-progress { display: flex; align-items: center; gap: 6px; width: 100%; max-width: 420px; }
+#np-cur, #np-dur { font-size: 10px; color: var(--text); width: 30px; flex-shrink: 0; }
 #np-dur { text-align: right; }
 
-#np-right { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
-#np-right svg { color: var(--muted); flex-shrink: 0; }
+#np-right { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+#np-right svg { color: var(--text); }
 
+/* Range inputs — Win98 style */
 input[type=range] {
-  -webkit-appearance: none; appearance: none; flex: 1; height: 4px;
-  background: linear-gradient(to right, var(--accent) 35%, var(--border) 35%);
-  border-radius: 2px; outline: none; cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--shadow) var(--highlight) var(--highlight) var(--shadow);
+  outline: none;
+  cursor: pointer;
+  border-radius: 0;
 }
 input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 12px; height: 12px;
-  background: var(--text); border-radius: 50%; cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 11px;
+  height: 19px;
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow);
+  cursor: pointer;
+  border-radius: 0;
 }
 input[type=range]::-moz-range-thumb {
-  width: 12px; height: 12px; background: var(--text); border-radius: 50%; border: none;
+  width: 11px;
+  height: 19px;
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  cursor: pointer;
+  border-radius: 0;
 }
-#vol-bar { max-width: 100px; }
+#vol-bar { max-width: 80px; }
 
-/* ── Scrollbars ───────────────────────────────────────────────── */
-::-webkit-scrollbar              { width: 6px; height: 6px; }
-::-webkit-scrollbar-track        { background: transparent; }
-::-webkit-scrollbar-thumb        { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover  { background: #444; }
-
-/* Preview banner */
-#preview-banner {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 999;
-  background: #1a1a00; border-bottom: 1px solid #555500;
-  color: #ffee66; font-size: 12px; text-align: center;
-  padding: 5px 12px;
+/* ── Scrollbars — Win98 style ─────────────────────────────────── */
+::-webkit-scrollbar              { width: 16px; height: 16px; }
+::-webkit-scrollbar-track        { background: var(--face); }
+::-webkit-scrollbar-thumb        {
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow);
 }
-body { padding-top: 30px; }
-#app { grid-template-rows: calc(100vh - var(--bar-h) - 30px); height: calc(100vh - var(--bar-h) - 30px); }
+::-webkit-scrollbar-button {
+  display: block;
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow);
+  height: 16px;
+  width: 16px;
+}
+::-webkit-scrollbar-corner { background: var(--face); }
   </style>
 </head>
 <body>
 
-<div id="preview-banner">
-  Static preview only — no audio plays. Run <code>music-update serve</code> for the live app.
-</div>
+<div id="win-frame">
 
-<div id="app">
+  <!-- ── Preview Banner ───────────────────────────────────────── -->
+  <div id="preview-banner">
+    Static preview only — no audio plays. Run <code>music-update serve</code> for the live app.
+  </div>
 
-  <!-- ── Sidebar ─────────────────────────────────────────────── -->
-  <aside id="sidebar">
-    <div id="sidebar-logo">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+  <!-- ── Title Bar ──────────────────────────────────────────── -->
+  <div id="win-titlebar">
+    <div id="win-title">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
         <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/>
       </svg>
-      Music
+      Music Library
     </div>
-
-    <nav id="sidebar-nav">
-      <ul>
-        <li class="nav-item active">
-          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-            <path d="M20 2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM8 4h12v12H8V4zM4 6H2v14a2 2 0 0 0 2 2h14v-2H4V6z"/>
-          </svg>
-          Library
-        </li>
-      </ul>
-
-      <div class="section-header">
-        <span>Playlists</span>
-        <button id="btn-new-playlist">+</button>
-      </div>
-
-      <ul id="playlist-list">
-        <li class="pl-item active">
-          <span class="pl-name">Favourites</span>
-          <button class="btn-del-pl">✕</button>
-        </li>
-        <li class="pl-item">
-          <span class="pl-name">Late Night Drive</span>
-          <button class="btn-del-pl">✕</button>
-        </li>
-        <li class="pl-item">
-          <span class="pl-name">Focus Mode</span>
-          <button class="btn-del-pl">✕</button>
-        </li>
-        <li class="pl-item">
-          <span class="pl-name">Workout</span>
-          <button class="btn-del-pl">✕</button>
-        </li>
-      </ul>
-    </nav>
-
-    <div id="scan-bar">
-      <input id="scan-path" type="text" value="/home/user/Music" />
-      <button id="btn-scan">Scan</button>
+    <div id="win-controls">
+      <button class="win-btn" title="Minimize">_</button>
+      <button class="win-btn" title="Maximize">□</button>
+      <button class="win-btn" title="Close">✕</button>
     </div>
-    <div id="scan-status">✓ Indexed 42 files</div>
-  </aside>
+  </div>
 
-  <!-- ── Main ──────────────────────────────────────────────────── -->
-  <main id="main">
-    <div id="toolbar">
-      <div id="search-wrap">
+  <!-- ── App ──────────────────────────────────────────────────── -->
+  <div id="app">
+
+    <!-- ── Sidebar ─────────────────────────────────────────────── -->
+    <aside id="sidebar">
+      <div id="sidebar-logo">
         <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-          <path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/>
         </svg>
-        <input id="search-input" type="text" placeholder="Search tracks, artists, albums…" />
+        My Music
       </div>
-      <span id="track-count">12 tracks</span>
+
+      <nav id="sidebar-nav">
+        <ul>
+          <li class="nav-item active">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+              <path d="M20 2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM8 4h12v12H8V4zM4 6H2v14a2 2 0 0 0 2 2h14v-2H4V6z"/>
+            </svg>
+            Library
+          </li>
+        </ul>
+
+        <div class="section-header">
+          <span>Playlists</span>
+          <button id="btn-new-playlist">+</button>
+        </div>
+
+        <ul id="playlist-list">
+          <li class="pl-item active">
+            <span class="pl-name">Favourites</span>
+            <button class="btn-del-pl">✕</button>
+          </li>
+          <li class="pl-item">
+            <span class="pl-name">Late Night Drive</span>
+            <button class="btn-del-pl">✕</button>
+          </li>
+          <li class="pl-item">
+            <span class="pl-name">Focus Mode</span>
+            <button class="btn-del-pl">✕</button>
+          </li>
+          <li class="pl-item">
+            <span class="pl-name">Workout</span>
+            <button class="btn-del-pl">✕</button>
+          </li>
+        </ul>
+      </nav>
+
+      <div id="scan-bar">
+        <input id="scan-path" type="text" value="C:\Users\User\Music" />
+        <button id="btn-scan">Scan</button>
+      </div>
+      <div id="scan-status">Indexed 42 files</div>
+    </aside>
+
+    <!-- ── Main ──────────────────────────────────────────────── -->
+    <main id="main">
+      <div id="toolbar">
+        <div id="search-wrap">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+            <path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+          <input id="search-input" type="text" placeholder="Search tracks, artists, albums…" />
+        </div>
+        <span id="track-count">12 tracks</span>
+      </div>
+
+      <div id="track-list-container">
+        <table id="track-table">
+          <thead>
+            <tr>
+              <th class="col-num">#</th>
+              <th class="col-art"></th>
+              <th class="col-title">Title</th>
+              <th class="col-artist">Artist</th>
+              <th class="col-album">Album</th>
+              <th class="col-year">Year</th>
+              <th class="col-dur">Duration</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody id="track-tbody">
+            <!-- populated by preview script below -->
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+  </div><!-- /#app -->
+
+  <!-- ── Now-playing bar ────────────────────────────────────────── -->
+  <footer id="now-playing">
+    <div id="np-left">
+      <div id="np-art">🎵</div>
+      <div id="np-meta">
+        <div id="np-title">Something About Us</div>
+        <div id="np-artist">Daft Punk</div>
+      </div>
     </div>
 
-    <div id="track-list-container">
-      <table id="track-table">
-        <thead>
-          <tr>
-            <th class="col-num">#</th>
-            <th class="col-art"></th>
-            <th class="col-title">Title</th>
-            <th class="col-artist">Artist</th>
-            <th class="col-album">Album</th>
-            <th class="col-year">Year</th>
-            <th class="col-dur">Duration</th>
-            <th class="col-actions"></th>
-          </tr>
-        </thead>
-        <tbody id="track-tbody">
-          <!-- populated by preview script below -->
-        </tbody>
-      </table>
+    <div id="np-center">
+      <div id="np-buttons">
+        <button>⏮</button>
+        <button class="btn-play-main">⏸</button>
+        <button>⏭</button>
+      </div>
+      <div id="np-progress">
+        <span id="np-cur">1:42</span>
+        <input type="range" min="0" max="1000" value="350" />
+        <span id="np-dur">4:07</span>
+      </div>
     </div>
-  </main>
 
-</div>
-
-<!-- ── Now-playing bar ──────────────────────────────────────────── -->
-<footer id="now-playing">
-  <div id="np-left">
-    <div id="np-art">🎵</div>
-    <div id="np-meta">
-      <div id="np-title">Something About Us</div>
-      <div id="np-artist">Daft Punk</div>
+    <div id="np-right">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+      </svg>
+      <input type="range" id="vol-bar" min="0" max="100" value="75" />
     </div>
-  </div>
+  </footer>
 
-  <div id="np-center">
-    <div id="np-buttons">
-      <button>⏮</button>
-      <button class="btn-play-main">⏸</button>
-      <button>⏭</button>
-    </div>
-    <div id="np-progress">
-      <span id="np-cur">1:42</span>
-      <input type="range" min="0" max="1000" value="350" />
-      <span id="np-dur">4:07</span>
-    </div>
-  </div>
-
-  <div id="np-right">
-    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-      <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-    </svg>
-    <input type="range" id="vol-bar" min="0" max="100" value="75" />
-  </div>
-</footer>
+</div><!-- /#win-frame -->
 
 <script>
 const TRACKS = [
-  { id:1,  emoji:"🟣", title:"Something About Us",     artist:"Daft Punk",          album:"Discovery",          year:"2001", dur:"4:07", playing:true  },
-  { id:2,  emoji:"🔵", title:"Midnight City",          artist:"M83",                album:"Hurry Up, We're Dreaming",year:"2011",dur:"4:03", playing:false },
-  { id:3,  emoji:"🟠", title:"Redbone",                artist:"Childish Gambino",   album:"\"Awaken, My Love!\"",  year:"2016", dur:"5:27", playing:false },
-  { id:4,  emoji:"🟢", title:"Electric Feel",          artist:"MGMT",               album:"Oracular Spectacular",year:"2007", dur:"3:49", playing:false },
-  { id:5,  emoji:"🔴", title:"Tame Impala (Intro)",    artist:"Tame Impala",        album:"Tame Impala EP",       year:"2008", dur:"2:21", playing:false },
-  { id:6,  emoji:"🟡", title:"Pink + White",           artist:"Frank Ocean",        album:"Blonde",               year:"2016", dur:"3:01", playing:false },
-  { id:7,  emoji:"🟤", title:"Motion Picture Soundtrack",artist:"Radiohead",        album:"Kid A",                year:"2000", dur:"7:01", playing:false },
-  { id:8,  emoji:"⚪", title:"Retrograde",             artist:"James Blake",        album:"Overgrown",            year:"2013", dur:"4:09", playing:false },
-  { id:9,  emoji:"🔵", title:"Holocene",               artist:"Bon Iver",           album:"Bon Iver, Bon Iver",   year:"2011", dur:"5:37", playing:false },
-  { id:10, emoji:"🟣", title:"Do I Wanna Know?",       artist:"Arctic Monkeys",     album:"AM",                   year:"2013", dur:"4:32", playing:false },
-  { id:11, emoji:"🟠", title:"Bad Guy",                artist:"Billie Eilish",      album:"When We All Fall Asleep", year:"2019", dur:"3:14", playing:false },
-  { id:12, emoji:"🟢", title:"Blinding Lights",        artist:"The Weeknd",         album:"After Hours",          year:"2020", dur:"3:20", playing:false },
+  { id:1,  emoji:"🟣", title:"Something About Us",        artist:"Daft Punk",          album:"Discovery",               year:"2001", dur:"4:07", playing:true  },
+  { id:2,  emoji:"🔵", title:"Midnight City",             artist:"M83",                album:"Hurry Up, We're Dreaming", year:"2011", dur:"4:03", playing:false },
+  { id:3,  emoji:"🟠", title:"Redbone",                   artist:"Childish Gambino",   album:"Awaken, My Love!",        year:"2016", dur:"5:27", playing:false },
+  { id:4,  emoji:"🟢", title:"Electric Feel",             artist:"MGMT",               album:"Oracular Spectacular",    year:"2007", dur:"3:49", playing:false },
+  { id:5,  emoji:"🔴", title:"Tame Impala (Intro)",       artist:"Tame Impala",        album:"Tame Impala EP",          year:"2008", dur:"2:21", playing:false },
+  { id:6,  emoji:"🟡", title:"Pink + White",              artist:"Frank Ocean",        album:"Blonde",                  year:"2016", dur:"3:01", playing:false },
+  { id:7,  emoji:"🟤", title:"Motion Picture Soundtrack", artist:"Radiohead",          album:"Kid A",                   year:"2000", dur:"7:01", playing:false },
+  { id:8,  emoji:"⚪", title:"Retrograde",                artist:"James Blake",        album:"Overgrown",               year:"2013", dur:"4:09", playing:false },
+  { id:9,  emoji:"🔵", title:"Holocene",                  artist:"Bon Iver",           album:"Bon Iver, Bon Iver",      year:"2011", dur:"5:37", playing:false },
+  { id:10, emoji:"🟣", title:"Do I Wanna Know?",          artist:"Arctic Monkeys",     album:"AM",                      year:"2013", dur:"4:32", playing:false },
+  { id:11, emoji:"🟠", title:"Bad Guy",                   artist:"Billie Eilish",      album:"When We All Fall Asleep", year:"2019", dur:"3:14", playing:false },
+  { id:12, emoji:"🟢", title:"Blinding Lights",           artist:"The Weeknd",         album:"After Hours",             year:"2020", dur:"3:20", playing:false },
 ];
 
 const tbody = document.getElementById('track-tbody');
@@ -413,7 +691,7 @@ TRACKS.forEach((t, i) => {
       <span class="row-num">${i + 1}</span>
     </td>
     <td class="col-art"><div class="art-thumb">${t.emoji}</div></td>
-    <td class="col-title" style="color:${t.playing ? '#1ed760' : ''}">${t.title}</td>
+    <td class="col-title">${t.title}</td>
     <td class="col-artist">${t.artist}</td>
     <td class="col-album">${t.album}</td>
     <td class="col-year">${t.year}</td>
