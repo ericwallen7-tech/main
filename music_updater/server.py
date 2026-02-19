@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import mimetypes
+import platform
+import re
+import shutil
 from pathlib import Path
 from typing import List, Optional
 
@@ -208,3 +211,110 @@ async def reorder_pl(playlist_id: int, req: ReorderRequest) -> dict:
         raise HTTPException(status_code=404, detail="Playlist not found")
     reorder_playlist(playlist_id, req.tracks)
     return get_playlist(playlist_id)  # type: ignore[return-value]
+
+
+# ---------------------------------------------------------------------------
+# Devices — detect mounted drives and copy tracks to them
+# ---------------------------------------------------------------------------
+
+_UNSAFE_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+
+
+def _safe_name(name: str) -> str:
+    """Sanitize a string for use as a filesystem path component."""
+    return _UNSAFE_CHARS.sub("_", name).strip(". ") or "Unknown"
+
+
+def _list_mounts() -> list[dict]:
+    """Return plausible removable-drive mount points for the current OS."""
+    system = platform.system()
+    results: list[dict] = []
+
+    if system == "Linux":
+        for base in (Path("/media"), Path("/mnt"), Path("/run/media")):
+            if not base.exists():
+                continue
+            try:
+                base_dev = base.stat().st_dev
+            except OSError:
+                continue
+            for child in base.iterdir():
+                # Walk one extra level so /media/<username>/<device> works too
+                candidates = [child] + (list(child.iterdir()) if child.is_dir() else [])
+                for p in candidates:
+                    try:
+                        if p.is_dir() and p.stat().st_dev != base_dev:
+                            results.append({"path": str(p), "label": p.name})
+                    except OSError:
+                        pass
+
+    elif system == "Darwin":
+        vols = Path("/Volumes")
+        if vols.exists():
+            for v in vols.iterdir():
+                if v.is_dir() and v.name != "Macintosh HD":
+                    results.append({"path": str(v), "label": v.name})
+
+    elif system == "Windows":
+        import string
+        for letter in string.ascii_uppercase[2:]:  # skip A:\ B:\
+            d = Path(f"{letter}:\\")
+            if d.exists():
+                results.append({"path": str(d), "label": f"{letter}:\\"})
+
+    return results
+
+
+@app.get("/api/devices")
+async def list_devices() -> list[dict]:
+    """Return detected removable drives / mount points."""
+    return _list_mounts()
+
+
+class CopyRequest(BaseModel):
+    track_ids: List[int]
+    device_path: str
+    organize: bool = True  # arrange into Music/Artist/Album/ on device
+
+
+@app.post("/api/devices/copy")
+async def copy_to_device(req: CopyRequest) -> dict:
+    """Copy one or more library tracks to a connected device."""
+    device = Path(req.device_path)
+    if not device.exists():
+        raise HTTPException(status_code=404, detail=f"Device path not found: {req.device_path}")
+
+    copied = 0
+    skipped = 0
+    errors: list[dict] = []
+
+    for tid in req.track_ids:
+        track = get_track(tid)
+        if not track:
+            errors.append({"id": tid, "reason": "track not found"})
+            continue
+
+        src = Path(track["path"])
+        if not src.exists():
+            errors.append({"id": tid, "reason": "file missing from disk"})
+            continue
+
+        if req.organize:
+            artist = _safe_name(track.get("artist") or "Unknown Artist")
+            album  = _safe_name(track.get("album")  or "Unknown Album")
+            dest_dir = device / "Music" / artist / album
+        else:
+            dest_dir = device / "Music"
+
+        try:
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            dest = dest_dir / src.name
+            if dest.exists():
+                skipped += 1
+                continue
+            shutil.copy2(str(src), str(dest))
+            copied += 1
+        except OSError as exc:
+            errors.append({"id": tid, "reason": str(exc)})
+
+    return {"copied": copied, "skipped": skipped, "errors": errors}

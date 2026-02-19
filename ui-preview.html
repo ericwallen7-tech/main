@@ -364,6 +364,35 @@ html, body {
 .col-dur     { width: 50px; font-size: 11px; text-align: right; }
 .col-actions { width: 60px; text-align: right; }
 
+/* ── Device section ───────────────────────────────────────────── */
+#btn-refresh-devices {
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow);
+  color: var(--text);
+  font-size: 11px;
+  cursor: pointer;
+  width: 18px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+}
+.dev-empty {
+  padding: 3px 8px;
+  color: var(--shadow);
+  font-size: 10px;
+  cursor: default;
+}
+.btn-copy { display: none !important; }
+body.has-device .btn-copy { display: inline-block !important; opacity: 0; }
+body.has-device tr:hover .btn-copy,
+body.has-device tr.playing .btn-copy { opacity: 1; }
+
 /* Art thumb — flex div for emoji display in preview */
 .art-thumb {
   width: 24px;
@@ -518,7 +547,7 @@ input[type=range]::-moz-range-thumb {
 ::-webkit-scrollbar-corner { background: var(--face); }
   </style>
 </head>
-<body>
+<body class="has-device">
 
 <div id="win-frame">
 
@@ -585,6 +614,18 @@ input[type=range]::-moz-range-thumb {
           <li class="pl-item">
             <span class="pl-name">Workout</span>
             <button class="btn-del-pl">✕</button>
+          </li>
+        </ul>
+
+        <div class="section-header">
+          <span>Devices</span>
+          <button id="btn-refresh-devices" title="Refresh">↻</button>
+        </div>
+
+        <ul id="device-list">
+          <li class="pl-item active" title="E:\">
+            <span style="font-size:13px;flex-shrink:0">💾</span>
+            <span class="pl-name">HiRes Player (E:\)</span>
           </li>
         </ul>
       </nav>
@@ -696,7 +737,10 @@ TRACKS.forEach((t, i) => {
     <td class="col-album">${t.album}</td>
     <td class="col-year">${t.year}</td>
     <td class="col-dur">${t.dur}</td>
-    <td class="col-actions"><button class="btn-row">+</button></td>
+    <td class="col-actions">
+      <button class="btn-row">+</button>
+      <button class="btn-row btn-copy" title="Copy to device">💾</button>
+    </td>
   `;
   tbody.appendChild(tr);
 });

@@ -594,6 +594,42 @@ input[type=range]::-moz-range-thumb {
   transform: translateX(-50%) translateY(0);
 }
 
+/* ── Device section ───────────────────────────────────────────── */
+#btn-refresh-devices {
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow);
+  color: var(--text);
+  font-size: 11px;
+  cursor: pointer;
+  width: 18px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+}
+#btn-refresh-devices:active {
+  border-color: var(--dk-shadow) var(--white) var(--white) var(--dk-shadow);
+  box-shadow: inset 1px 1px 0 var(--shadow), inset -1px -1px 0 var(--highlight);
+}
+
+.dev-empty {
+  padding: 3px 8px;
+  color: var(--shadow);
+  font-size: 10px;
+  cursor: default;
+}
+
+/* Copy-to-device button — only visible when a device is connected */
+.btn-copy { display: none !important; }
+body.has-device .btn-copy { display: inline-block !important; opacity: 0; }
+body.has-device tr:hover .btn-copy,
+body.has-device tr.playing .btn-copy { opacity: 1; }
+
 /* ── Scrollbars — Win98 style ─────────────────────────────────── */
 ::-webkit-scrollbar              { width: 16px; height: 16px; }
 ::-webkit-scrollbar-track        { background: var(--face); }

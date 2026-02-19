@@ -2,13 +2,15 @@
 
 // ── State ────────────────────────────────────────────────────────
 const state = {
-  view:         'library', // 'library' | <playlist_id>
-  tracks:       [],        // currently displayed tracks
-  playlists:    [],        // sidebar list
-  queue:        [],        // playback queue
-  queueIndex:   -1,
-  currentTrack: null,
-  isPlaying:    false,
+  view:           'library', // 'library' | <playlist_id>
+  tracks:         [],        // currently displayed tracks
+  playlists:      [],        // sidebar list
+  devices:        [],        // detected mount points
+  selectedDevice: null,      // { path, label } | null
+  queue:          [],        // playback queue
+  queueIndex:     -1,
+  currentTrack:   null,
+  isPlaying:      false,
 };
 
 // ── DOM refs ─────────────────────────────────────────────────────
@@ -35,7 +37,9 @@ const toast        = document.getElementById('toast');
 const scanPath     = document.getElementById('scan-path');
 const btnScan      = document.getElementById('btn-scan');
 const scanStatus   = document.getElementById('scan-status');
-const btnNewPl     = document.getElementById('btn-new-playlist');
+const btnNewPl          = document.getElementById('btn-new-playlist');
+const deviceList        = document.getElementById('device-list');
+const btnRefreshDevices = document.getElementById('btn-refresh-devices');
 
 // ── Utilities ────────────────────────────────────────────────────
 
@@ -153,6 +157,74 @@ function updateActiveNav() {
   );
 }
 
+// ── Devices ───────────────────────────────────────────────────────
+
+async function loadDevices() {
+  try {
+    state.devices = await api('GET', '/devices');
+  } catch {
+    state.devices = [];
+  }
+  renderDevices();
+}
+
+function renderDevices() {
+  deviceList.innerHTML = '';
+
+  if (!state.devices.length) {
+    const li = document.createElement('li');
+    li.className = 'dev-empty';
+    li.textContent = 'No devices found';
+    deviceList.appendChild(li);
+    return;
+  }
+
+  state.devices.forEach(dev => {
+    const li = document.createElement('li');
+    const isSelected = state.selectedDevice?.path === dev.path;
+    li.className = 'pl-item' + (isSelected ? ' active' : '');
+    li.title = dev.path;
+    li.innerHTML = `
+      <span style="font-size:13px;flex-shrink:0">💾</span>
+      <span class="pl-name">${esc(dev.label)}</span>
+    `;
+    li.addEventListener('click', () => selectDevice(dev));
+    deviceList.appendChild(li);
+  });
+}
+
+function selectDevice(dev) {
+  if (state.selectedDevice?.path === dev.path) {
+    state.selectedDevice = null;
+    document.body.classList.remove('has-device');
+    showToast('Device disconnected');
+  } else {
+    state.selectedDevice = dev;
+    document.body.classList.add('has-device');
+    showToast(`Connected: ${dev.label}`);
+  }
+  renderDevices();
+}
+
+async function copyTrackToDevice(track) {
+  if (!state.selectedDevice) return;
+  try {
+    const res = await api('POST', '/devices/copy', {
+      track_ids:   [track.id],
+      device_path: state.selectedDevice.path,
+    });
+    if (res.copied === 1) {
+      showToast(`Copied to ${state.selectedDevice.label}`);
+    } else if (res.skipped === 1) {
+      showToast('Already on device — skipped');
+    } else {
+      showToast(`Copy error: ${res.errors[0]?.reason ?? 'unknown'}`);
+    }
+  } catch (e) {
+    showToast(`Copy failed: ${e.message}`);
+  }
+}
+
 // ── Render: track table ──────────────────────────────────────────
 
 function renderTracks(tracks, { showRemove = false, playlistId = null } = {}) {
@@ -183,6 +255,7 @@ function renderTracks(tracks, { showRemove = false, playlistId = null } = {}) {
       <td class="col-dur">${fmtDur(track.duration_secs)}</td>
       <td class="col-actions">
         <button class="btn-row btn-add" title="Add to playlist">+</button>
+        <button class="btn-row btn-copy" title="Copy to device">💾</button>
         ${showRemove ? `<button class="btn-row btn-rm" title="Remove from playlist">✕</button>` : ''}
       </td>
     `;
@@ -196,6 +269,12 @@ function renderTracks(tracks, { showRemove = false, playlistId = null } = {}) {
     tr.querySelector('.btn-add').addEventListener('click', e => {
       e.stopPropagation();
       showAddMenu(track, e.currentTarget);
+    });
+
+    // Copy to device button
+    tr.querySelector('.btn-copy').addEventListener('click', e => {
+      e.stopPropagation();
+      copyTrackToDevice(track);
     });
 
     // Remove from playlist button
@@ -404,6 +483,10 @@ btnNewPl.addEventListener('click', async () => {
   showToast(`Playlist "${name.trim()}" created`);
 });
 
+// ── Device refresh ────────────────────────────────────────────────
+
+btnRefreshDevices.addEventListener('click', loadDevices);
+
 // ── Scan ──────────────────────────────────────────────────────────
 
 btnScan.addEventListener('click', async () => {
@@ -440,5 +523,5 @@ document.addEventListener('keydown', e => {
 
 (async function init() {
   audio.volume = volBar.value / 100;
-  await Promise.all([loadPlaylists(), loadLibrary()]);
+  await Promise.all([loadPlaylists(), loadLibrary(), loadDevices()]);
 })();
