@@ -519,6 +519,44 @@ document.addEventListener('keydown', e => {
   if (e.code === 'ArrowLeft'  && e.altKey) { e.preventDefault(); playPrev(); }
 });
 
+// ── Drag-and-drop file upload ─────────────────────────────────────
+
+const dropOverlay = document.getElementById('drop-overlay');
+const AUDIO_EXTS  = /\.(mp3|flac|m4a|aac)$/i;
+
+document.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropOverlay.classList.add('active');
+});
+
+document.addEventListener('dragleave', e => {
+  // Only hide when the cursor truly leaves the window
+  if (!e.relatedTarget) dropOverlay.classList.remove('active');
+});
+
+document.addEventListener('drop', async e => {
+  e.preventDefault();
+  dropOverlay.classList.remove('active');
+
+  const files = [...(e.dataTransfer?.files ?? [])].filter(f => AUDIO_EXTS.test(f.name));
+  if (!files.length) { showToast('No supported audio files dropped'); return; }
+
+  showToast(`Uploading ${files.length} file${files.length !== 1 ? 's' : ''}…`);
+
+  const form = new FormData();
+  files.forEach(f => form.append('files', f));
+
+  try {
+    const res = await fetch('/api/library/upload', { method: 'POST', body: form });
+    if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+    const data = await res.json();
+    showToast(`Added ${data.saved} file${data.saved !== 1 ? 's' : ''} to library`);
+    if (state.view === 'library') await loadLibrary(searchInput.value.trim());
+  } catch (err) {
+    showToast(`Upload failed: ${err.message}`);
+  }
+});
+
 // ── Init ──────────────────────────────────────────────────────────
 
 (async function init() {

@@ -594,6 +594,38 @@ input[type=range]::-moz-range-thumb {
   transform: translateX(-50%) translateY(0);
 }
 
+/* ── Drag-and-drop overlay ────────────────────────────────────── */
+#drop-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(0, 0, 128, 0.45);
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+#drop-overlay.active { display: flex; }
+
+#drop-box {
+  background: var(--face);
+  border: 2px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow),
+              4px 4px 0 var(--dk-shadow);
+  padding: 28px 44px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: bold;
+  pointer-events: none;
+}
+#drop-box-hint {
+  font-size: 10px;
+  color: var(--shadow);
+  margin-top: 6px;
+  font-weight: normal;
+}
+
 /* ── Device section ───────────────────────────────────────────── */
 #btn-refresh-devices {
   background: var(--face);

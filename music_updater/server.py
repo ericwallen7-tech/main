@@ -9,7 +9,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -69,6 +69,35 @@ async def get_library(
 
 class ScanRequest(BaseModel):
     path: str
+
+
+_UPLOAD_DIR = Path.home() / ".music_updater" / "uploads"
+_UPLOAD_EXTS = {".mp3", ".flac", ".m4a", ".aac"}
+
+
+@app.post("/api/library/upload")
+async def upload_tracks(files: list[UploadFile] = File(...)) -> dict:
+    """Accept dragged/uploaded audio files, save them, and index them."""
+    _UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    saved: list[Path] = []
+    errors: list[dict] = []
+
+    for uf in files:
+        suffix = Path(uf.filename or "").suffix.lower()
+        if suffix not in _UPLOAD_EXTS:
+            errors.append({"file": uf.filename, "reason": "unsupported format"})
+            continue
+        dest = _UPLOAD_DIR / (uf.filename or f"upload{suffix}")
+        try:
+            dest.write_bytes(await uf.read())
+            saved.append(dest)
+        except OSError as exc:
+            errors.append({"file": uf.filename, "reason": str(exc)})
+
+    if saved:
+        index_directory(_UPLOAD_DIR)
+
+    return {"saved": len(saved), "errors": errors}
 
 
 @app.post("/api/library/scan")
