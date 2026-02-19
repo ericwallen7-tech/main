@@ -169,7 +169,71 @@ async def track_artwork(track_id: int) -> Response:
     raise HTTPException(status_code=404, detail="Artwork not extractable")
 
 
-@app.post("/api/tracks/{track_id}/fetch-art")
+# ---------------------------------------------------------------------------
+# Track metadata — edit and online lookup
+# ---------------------------------------------------------------------------
+
+
+class UpdateTrackRequest(BaseModel):
+    title:        Optional[str] = None
+    artist:       Optional[str] = None
+    album:        Optional[str] = None
+    year:         Optional[str] = None
+    track_number: Optional[str] = None
+    genre:        Optional[str] = None
+
+
+@app.put("/api/tracks/{track_id}")
+async def update_track_metadata(track_id: int, req: UpdateTrackRequest) -> dict:
+    """Write metadata fields to the audio file and re-index it."""
+    track = get_track(track_id)
+    if not track:
+        raise HTTPException(status_code=404, detail="Track not found")
+    path = Path(track["path"])
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="File missing from disk")
+
+    af = AudioFile(path)
+    if req.title        is not None: af.title  = req.title
+    if req.artist       is not None: af.artist = req.artist
+    if req.album        is not None: af.album  = req.album
+    if req.year         is not None: af.year   = req.year
+    if req.track_number is not None: af.track  = req.track_number
+    if req.genre        is not None: af.genre  = req.genre
+    af.save()
+
+    with get_conn() as conn:
+        index_file(path, conn)
+
+    return get_track(track_id)  # type: ignore[return-value]
+
+
+_ITUNES_SEARCH_URL = "https://itunes.apple.com/search"
+
+
+@app.get("/api/library/lookup")
+async def lookup_metadata(q: str = Query(..., description="Free-text search")) -> list[dict]:
+    """Search iTunes for track metadata candidates."""
+    params = {"term": q, "entity": "musicTrack", "media": "music", "limit": "10", "lang": "en_us"}
+    try:
+        resp = _requests.get(_ITUNES_SEARCH_URL, params=params, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"iTunes lookup failed: {exc}")
+
+    results = []
+    for r in data.get("results", []):
+        results.append({
+            "title":       r.get("trackName", ""),
+            "artist":      r.get("artistName", ""),
+            "album":       r.get("collectionName", ""),
+            "year":        (r.get("releaseDate") or "")[:4],
+            "track":       str(r.get("trackNumber") or ""),
+            "genre":       r.get("primaryGenreName", ""),
+            "artwork_url": (r.get("artworkUrl100") or "").replace("100x100bb", "300x300bb"),
+        })
+    return results
 async def fetch_track_art(track_id: int) -> dict:
     """Fetch artwork from iTunes/MusicBrainz and embed it into the file."""
     track = get_track(track_id)

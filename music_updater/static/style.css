@@ -399,7 +399,7 @@ html, body {
 .col-album   { min-width: 100px; }
 .col-year    { width: 50px; font-size: 11px; }
 .col-dur     { width: 50px; font-size: 11px; text-align: right; }
-.col-actions { width: 80px; text-align: right; }
+.col-actions { width: 96px; text-align: right; }
 
 /* Tiny album thumb */
 .art-thumb {
@@ -686,6 +686,163 @@ input[type=range]::-moz-range-thumb {
 body.has-device .btn-copy { display: inline-block !important; opacity: 0; }
 body.has-device tr:hover .btn-copy,
 body.has-device tr.playing .btn-copy { opacity: 1; }
+
+/* ── Edit metadata modal ──────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-win {
+  background: var(--face);
+  border: 2px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow),
+              4px 4px 0 var(--dk-shadow);
+  width: 380px;
+  max-width: calc(100vw - 24px);
+}
+
+.modal-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--title-h);
+  background: linear-gradient(to right, var(--title-bg), var(--title-grad));
+  padding: 2px 4px;
+  user-select: none;
+}
+.modal-titlebar span { color: #fff; font-weight: bold; font-size: 11px; padding-left: 4px; }
+
+.modal-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+
+/* Online lookup */
+.modal-lookup { display: flex; flex-direction: column; gap: 4px; }
+
+.modal-lookup-row {
+  display: flex;
+  gap: 4px;
+}
+.modal-lookup-row input {
+  flex: 1;
+  background: var(--white);
+  border-top: 2px solid var(--shadow);
+  border-left: 2px solid var(--shadow);
+  border-bottom: 2px solid var(--highlight);
+  border-right: 2px solid var(--highlight);
+  padding: 2px 4px;
+  font-size: 11px;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+  outline: none;
+}
+.modal-lookup-row button {
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow);
+  color: var(--text);
+  padding: 3px 10px;
+  font-size: 11px;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.modal-lookup-row button:active {
+  border-color: var(--dk-shadow) var(--white) var(--white) var(--dk-shadow);
+  box-shadow: inset 1px 1px 0 var(--shadow), inset -1px -1px 0 var(--highlight);
+}
+
+#edit-lookup-results {
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid var(--shadow);
+  background: var(--white);
+  display: none;
+}
+#edit-lookup-results.has-results { display: block; }
+
+.lookup-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-bottom: 1px solid #e8e8e8;
+  font-size: 11px;
+}
+.lookup-item:last-child { border-bottom: none; }
+.lookup-item:hover { background: var(--hi-bg); color: var(--hi-text); }
+.lookup-item img {
+  width: 32px; height: 32px; object-fit: cover; flex-shrink: 0;
+  border: 1px solid var(--shadow);
+}
+.lookup-item-meta { min-width: 0; }
+.lookup-item-title { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lookup-item-sub   { color: var(--shadow); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lookup-item:hover .lookup-item-sub { color: #aad; }
+.lookup-empty { padding: 8px; text-align: center; color: var(--shadow); font-size: 11px; }
+
+/* Tag fields */
+.modal-fields { display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--shadow); padding-top: 8px; }
+
+.modal-field-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.modal-field-row label {
+  width: 52px;
+  text-align: right;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.modal-field-row input {
+  flex: 1;
+  background: var(--white);
+  border-top: 2px solid var(--shadow);
+  border-left: 2px solid var(--shadow);
+  border-bottom: 2px solid var(--highlight);
+  border-right: 2px solid var(--highlight);
+  padding: 2px 4px;
+  font-size: 11px;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+  outline: none;
+}
+.modal-field-row input:focus {
+  border-top-color: var(--dk-shadow);
+  border-left-color: var(--dk-shadow);
+}
+
+/* Footer buttons */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  border-top: 1px solid var(--shadow);
+  padding-top: 8px;
+}
+.modal-footer button {
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow);
+  color: var(--text);
+  padding: 3px 16px;
+  font-size: 11px;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+  cursor: pointer;
+  min-width: 60px;
+}
+.modal-footer button:active {
+  border-color: var(--dk-shadow) var(--white) var(--white) var(--dk-shadow);
+  box-shadow: inset 1px 1px 0 var(--shadow), inset -1px -1px 0 var(--highlight);
+}
 
 /* ── Scrollbars — Win98 style ─────────────────────────────────── */
 ::-webkit-scrollbar              { width: 16px; height: 16px; }

@@ -153,6 +153,60 @@
     <div id="ctx-menu-list"></div>
   </div>
 
+  <!-- Edit metadata modal -->
+  <div id="edit-overlay" class="modal-overlay hidden">
+    <div id="edit-win" class="modal-win">
+      <div class="modal-titlebar">
+        <span>Edit Track Metadata</span>
+        <button id="edit-close" class="win-btn">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Online lookup -->
+        <div class="modal-lookup">
+          <div class="modal-lookup-row">
+            <input id="edit-lookup-q" type="text" placeholder="Search iTunes (artist, album, song)…" />
+            <button id="edit-lookup-btn">Search</button>
+          </div>
+          <div id="edit-lookup-results"></div>
+        </div>
+
+        <!-- Tag fields -->
+        <div class="modal-fields">
+          <div class="modal-field-row">
+            <label for="edit-title">Title</label>
+            <input id="edit-title" type="text" />
+          </div>
+          <div class="modal-field-row">
+            <label for="edit-artist">Artist</label>
+            <input id="edit-artist" type="text" />
+          </div>
+          <div class="modal-field-row">
+            <label for="edit-album">Album</label>
+            <input id="edit-album" type="text" />
+          </div>
+          <div class="modal-field-row">
+            <label for="edit-year">Year</label>
+            <input id="edit-year" type="text" style="width:60px" />
+          </div>
+          <div class="modal-field-row">
+            <label for="edit-track">Track #</label>
+            <input id="edit-track" type="text" style="width:60px" />
+          </div>
+          <div class="modal-field-row">
+            <label for="edit-genre">Genre</label>
+            <input id="edit-genre" type="text" />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="edit-save">Save</button>
+          <button id="edit-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Drag-and-drop overlay -->
   <div id="drop-overlay">
     <div id="drop-box">

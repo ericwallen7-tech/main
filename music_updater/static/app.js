@@ -42,6 +42,21 @@ const deviceList        = document.getElementById('device-list');
 const btnRefreshDevices = document.getElementById('btn-refresh-devices');
 const btnFetchArtAll    = document.getElementById('btn-fetch-art-all');
 
+// Edit modal
+const editOverlay      = document.getElementById('edit-overlay');
+const editClose        = document.getElementById('edit-close');
+const editCancel       = document.getElementById('edit-cancel');
+const editSave         = document.getElementById('edit-save');
+const editLookupQ      = document.getElementById('edit-lookup-q');
+const editLookupBtn    = document.getElementById('edit-lookup-btn');
+const editLookupRes    = document.getElementById('edit-lookup-results');
+const editTitle        = document.getElementById('edit-title');
+const editArtist       = document.getElementById('edit-artist');
+const editAlbum        = document.getElementById('edit-album');
+const editYear         = document.getElementById('edit-year');
+const editTrackNum     = document.getElementById('edit-track');
+const editGenre        = document.getElementById('edit-genre');
+
 // ── Utilities ────────────────────────────────────────────────────
 
 function fmtDur(secs) {
@@ -226,6 +241,107 @@ async function copyTrackToDevice(track) {
   }
 }
 
+// ── Edit metadata modal ───────────────────────────────────────────
+
+let editTrack = null;
+
+function openEditModal(track) {
+  editTrack = track;
+  editTitle.value    = track.title        || '';
+  editArtist.value   = track.artist       || '';
+  editAlbum.value    = track.album        || '';
+  editYear.value     = track.year         || '';
+  editTrackNum.value = track.track_number || '';
+  editGenre.value    = track.genre        || '';
+  // Pre-fill lookup box with best guess for the search
+  editLookupQ.value  = [track.artist, track.title].filter(Boolean).join(' ');
+  editLookupRes.innerHTML = '';
+  editLookupRes.classList.remove('has-results');
+  editOverlay.classList.remove('hidden');
+  editTitle.focus();
+}
+
+function closeEditModal() {
+  editOverlay.classList.add('hidden');
+  editTrack = null;
+}
+
+function populateForm(candidate) {
+  if (candidate.title)  editTitle.value    = candidate.title;
+  if (candidate.artist) editArtist.value   = candidate.artist;
+  if (candidate.album)  editAlbum.value    = candidate.album;
+  if (candidate.year)   editYear.value     = candidate.year;
+  if (candidate.track)  editTrackNum.value = candidate.track;
+  if (candidate.genre)  editGenre.value    = candidate.genre;
+  editLookupRes.classList.remove('has-results');
+}
+
+async function doLookup() {
+  const q = editLookupQ.value.trim();
+  if (!q) return;
+  editLookupBtn.disabled = true;
+  editLookupBtn.textContent = '…';
+  try {
+    const results = await api('GET', `/library/lookup?q=${encodeURIComponent(q)}`);
+    editLookupRes.innerHTML = '';
+    if (!results.length) {
+      editLookupRes.innerHTML = '<div class="lookup-empty">No results found</div>';
+    } else {
+      results.forEach(r => {
+        const div = document.createElement('div');
+        div.className = 'lookup-item';
+        div.innerHTML = `
+          ${r.artwork_url ? `<img src="${esc(r.artwork_url)}" alt="" onerror="this.style.display='none'" />` : ''}
+          <div class="lookup-item-meta">
+            <div class="lookup-item-title">${esc(r.title || '—')}</div>
+            <div class="lookup-item-sub">${esc(r.artist)}${r.album ? ' · ' + esc(r.album) : ''}${r.year ? ' (' + esc(r.year) + ')' : ''}</div>
+          </div>
+        `;
+        div.addEventListener('click', () => populateForm(r));
+        editLookupRes.appendChild(div);
+      });
+    }
+    editLookupRes.classList.add('has-results');
+  } catch (e) {
+    editLookupRes.innerHTML = `<div class="lookup-empty">Lookup error: ${esc(e.message)}</div>`;
+    editLookupRes.classList.add('has-results');
+  } finally {
+    editLookupBtn.disabled = false;
+    editLookupBtn.textContent = 'Search';
+  }
+}
+
+async function saveEdit() {
+  if (!editTrack) return;
+  editSave.disabled = true;
+  try {
+    await api('PUT', `/tracks/${editTrack.id}`, {
+      title:        editTitle.value    || null,
+      artist:       editArtist.value   || null,
+      album:        editAlbum.value    || null,
+      year:         editYear.value     || null,
+      track_number: editTrackNum.value || null,
+      genre:        editGenre.value    || null,
+    });
+    showToast('Metadata saved');
+    closeEditModal();
+    if (state.view === 'library') await loadLibrary(searchInput.value.trim());
+    else await loadPlaylist(state.view);
+  } catch (e) {
+    showToast(`Save failed: ${e.message}`);
+  } finally {
+    editSave.disabled = false;
+  }
+}
+
+// Modal event wiring
+editClose.addEventListener('click', closeEditModal);
+editCancel.addEventListener('click', closeEditModal);
+editOverlay.addEventListener('click', e => { if (e.target === editOverlay) closeEditModal(); });
+editSave.addEventListener('click', saveEdit);
+editLookupBtn.addEventListener('click', doLookup);
+editLookupQ.addEventListener('keydown', e => { if (e.key === 'Enter') doLookup(); });
+
 async function fetchArtForTrack(track) {
   try {
     await api('POST', `/tracks/${track.id}/fetch-art`);
@@ -266,8 +382,9 @@ function renderTracks(tracks, { showRemove = false, playlistId = null } = {}) {
       <td class="col-year">${esc(track.year || '—')}</td>
       <td class="col-dur">${fmtDur(track.duration_secs)}</td>
       <td class="col-actions">
-        <button class="btn-row btn-add" title="Add to playlist">+</button>
-        <button class="btn-row btn-art" title="Fetch artwork">🎨</button>
+        <button class="btn-row btn-add"  title="Add to playlist">+</button>
+        <button class="btn-row btn-edit" title="Edit metadata">✏</button>
+        <button class="btn-row btn-art"  title="Fetch artwork">🎨</button>
         <button class="btn-row btn-copy" title="Copy to device">💾</button>
         ${showRemove ? `<button class="btn-row btn-rm" title="Remove from playlist">✕</button>` : ''}
       </td>
@@ -282,6 +399,12 @@ function renderTracks(tracks, { showRemove = false, playlistId = null } = {}) {
     tr.querySelector('.btn-add').addEventListener('click', e => {
       e.stopPropagation();
       showAddMenu(track, e.currentTarget);
+    });
+
+    // Edit metadata button
+    tr.querySelector('.btn-edit').addEventListener('click', e => {
+      e.stopPropagation();
+      openEditModal(track);
     });
 
     // Fetch artwork button
@@ -550,6 +673,10 @@ btnFetchArtAll.addEventListener('click', async () => {
 // ── Keyboard shortcuts ────────────────────────────────────────────
 
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !editOverlay.classList.contains('hidden')) {
+    closeEditModal();
+    return;
+  }
   // Space = play/pause (unless typing in an input)
   if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT') {
     e.preventDefault();
