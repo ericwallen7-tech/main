@@ -9,19 +9,23 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
+import requests as _requests
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from .artwork import fetch_artwork
 from .db import (
     DB_PATH,
     add_track_to_playlist,
     create_playlist,
     delete_playlist,
+    get_conn,
     get_playlist,
     get_track,
     index_directory,
+    index_file,
     init_db,
     list_playlists,
     remove_track_from_playlist,
@@ -163,6 +167,75 @@ async def track_artwork(track_id: int) -> Response:
         raise HTTPException(status_code=500, detail=str(exc))
 
     raise HTTPException(status_code=404, detail="Artwork not extractable")
+
+
+@app.post("/api/tracks/{track_id}/fetch-art")
+async def fetch_track_art(track_id: int) -> dict:
+    """Fetch artwork from iTunes/MusicBrainz and embed it into the file."""
+    track = get_track(track_id)
+    if not track:
+        raise HTTPException(status_code=404, detail="Track not found")
+    path = Path(track["path"])
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="File missing from disk")
+
+    af = AudioFile(path)
+    if not af.artist or not af.album:
+        raise HTTPException(
+            status_code=422,
+            detail="Track is missing artist or album tags needed for artwork search",
+        )
+
+    with _requests.Session() as session:
+        result = fetch_artwork(af.artist, af.album, session=session)
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="No artwork found online")
+
+    image_data, mime_type = result
+    af.set_artwork(image_data, mime_type)
+    af.save()
+    with get_conn() as conn:
+        index_file(path, conn)
+
+    return {"ok": True, "bytes": len(image_data), "mime_type": mime_type}
+
+
+@app.post("/api/library/fetch-art")
+async def fetch_library_art() -> dict:
+    """Fetch and embed artwork for every track currently missing it."""
+    tracks = search_tracks()
+    missing = [t for t in tracks if not t["has_artwork"]]
+
+    fetched = 0
+    skipped = 0
+    errors: list[dict] = []
+
+    with _requests.Session() as session:
+        for track in missing:
+            path = Path(track["path"])
+            if not path.exists():
+                errors.append({"id": track["id"], "reason": "file missing"})
+                continue
+
+            af = AudioFile(path)
+            if not af.artist or not af.album:
+                skipped += 1
+                continue
+
+            result = fetch_artwork(af.artist, af.album, session=session)
+            if result is None:
+                skipped += 1
+                continue
+
+            image_data, mime_type = result
+            af.set_artwork(image_data, mime_type)
+            af.save()
+            with get_conn() as conn:
+                index_file(path, conn)
+            fetched += 1
+
+    return {"fetched": fetched, "skipped": skipped, "errors": errors}
 
 
 # ---------------------------------------------------------------------------

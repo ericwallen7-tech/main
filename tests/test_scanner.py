@@ -30,7 +30,7 @@ class TestScan:
         assert list(scan(f)) == [f]
 
     def test_unsupported_single_file_yields_nothing(self, tmp_dir):
-        f = _touch(tmp_dir / "audio.wav")
+        f = _touch(tmp_dir / "audio.ogg")
         assert list(scan(f)) == []
 
     def test_flat_directory(self, tmp_dir):

@@ -40,6 +40,7 @@ const scanStatus   = document.getElementById('scan-status');
 const btnNewPl          = document.getElementById('btn-new-playlist');
 const deviceList        = document.getElementById('device-list');
 const btnRefreshDevices = document.getElementById('btn-refresh-devices');
+const btnFetchArtAll    = document.getElementById('btn-fetch-art-all');
 
 // ── Utilities ────────────────────────────────────────────────────
 
@@ -225,6 +226,17 @@ async function copyTrackToDevice(track) {
   }
 }
 
+async function fetchArtForTrack(track) {
+  try {
+    await api('POST', `/tracks/${track.id}/fetch-art`);
+    showToast(`Artwork fetched for "${track.title || track.id}"`);
+    if (state.view === 'library') await loadLibrary(searchInput.value.trim());
+    else await loadPlaylist(state.view);
+  } catch (e) {
+    showToast(`Fetch art failed: ${e.message}`);
+  }
+}
+
 // ── Render: track table ──────────────────────────────────────────
 
 function renderTracks(tracks, { showRemove = false, playlistId = null } = {}) {
@@ -255,6 +267,7 @@ function renderTracks(tracks, { showRemove = false, playlistId = null } = {}) {
       <td class="col-dur">${fmtDur(track.duration_secs)}</td>
       <td class="col-actions">
         <button class="btn-row btn-add" title="Add to playlist">+</button>
+        <button class="btn-row btn-art" title="Fetch artwork">🎨</button>
         <button class="btn-row btn-copy" title="Copy to device">💾</button>
         ${showRemove ? `<button class="btn-row btn-rm" title="Remove from playlist">✕</button>` : ''}
       </td>
@@ -269,6 +282,12 @@ function renderTracks(tracks, { showRemove = false, playlistId = null } = {}) {
     tr.querySelector('.btn-add').addEventListener('click', e => {
       e.stopPropagation();
       showAddMenu(track, e.currentTarget);
+    });
+
+    // Fetch artwork button
+    tr.querySelector('.btn-art').addEventListener('click', e => {
+      e.stopPropagation();
+      fetchArtForTrack(track);
     });
 
     // Copy to device button
@@ -504,6 +523,27 @@ btnScan.addEventListener('click', async () => {
     scanStatus.textContent = `Error: ${e.message}`;
   } finally {
     btnScan.disabled = false;
+  }
+});
+
+// ── Fetch Art (bulk) ─────────────────────────────────────────────
+
+btnFetchArtAll.addEventListener('click', async () => {
+  btnFetchArtAll.disabled = true;
+  scanStatus.textContent = 'Fetching artwork…';
+  try {
+    const res = await api('POST', '/library/fetch-art');
+    const { fetched, skipped, errors } = res;
+    scanStatus.textContent =
+      `✓ Art: ${fetched} fetched, ${skipped} skipped` +
+      (errors.length ? `, ${errors.length} error(s)` : '');
+    if (fetched > 0 && state.view === 'library') {
+      await loadLibrary(searchInput.value.trim());
+    }
+  } catch (e) {
+    scanStatus.textContent = `Error: ${e.message}`;
+  } finally {
+    btnFetchArtAll.disabled = false;
   }
 });
 
