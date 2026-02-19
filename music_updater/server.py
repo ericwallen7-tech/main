@@ -72,7 +72,7 @@ class ScanRequest(BaseModel):
 
 
 _UPLOAD_DIR = Path.home() / ".music_updater" / "uploads"
-_UPLOAD_EXTS = {".mp3", ".flac", ".m4a", ".aac"}
+_UPLOAD_EXTS = {".mp3", ".flac", ".m4a", ".aac", ".wav"}
 
 
 @app.post("/api/library/upload")
@@ -139,7 +139,7 @@ async def track_artwork(track_id: int) -> Response:
     fmt = path.suffix.lower()
     try:
         af = AudioFile(path)
-        if fmt == ".mp3":
+        if fmt in (".mp3", ".wav"):
             for frame in af._tag.values():
                 if hasattr(frame, "data") and hasattr(frame, "mime"):
                     return Response(content=frame.data, media_type=frame.mime)

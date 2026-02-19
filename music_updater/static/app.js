@@ -522,7 +522,7 @@ document.addEventListener('keydown', e => {
 // ── Drag-and-drop file upload ─────────────────────────────────────
 
 const dropOverlay = document.getElementById('drop-overlay');
-const AUDIO_EXTS  = /\.(mp3|flac|m4a|aac)$/i;
+const AUDIO_EXTS  = /\.(mp3|flac|m4a|aac|wav)$/i;
 
 document.addEventListener('dragover', e => {
   e.preventDefault();

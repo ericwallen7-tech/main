@@ -19,8 +19,9 @@ from mutagen.id3 import (
 )
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4, MP4Cover
+from mutagen.wave import WAVE
 
-SUPPORTED_EXTENSIONS = frozenset({".mp3", ".flac", ".m4a", ".aac"})
+SUPPORTED_EXTENSIONS = frozenset({".mp3", ".flac", ".m4a", ".aac", ".wav"})
 
 
 class AudioFile:
@@ -34,6 +35,7 @@ class AudioFile:
                 f"Supported: {', '.join(sorted(SUPPORTED_EXTENSIONS))}"
             )
         self._fmt = self.path.suffix.lower()
+        self._wave = None  # only set for .wav files
         self._tag = self._load_tag()
 
     # ------------------------------------------------------------------
@@ -50,6 +52,12 @@ class AudioFile:
                 return tag
         elif self._fmt == ".flac":
             return FLAC(str(self.path))
+        elif self._fmt == ".wav":
+            w = WAVE(str(self.path))
+            if w.tags is None:
+                w.add_tags()
+            self._wave = w
+            return w.tags
         else:  # .m4a / .aac
             return MP4(str(self.path))
 
@@ -80,7 +88,7 @@ class AudioFile:
 
     @property
     def title(self) -> Optional[str]:
-        if self._fmt == ".mp3":
+        if self._fmt in (".mp3", ".wav"):
             return self._get_id3("TIT2")
         elif self._fmt == ".flac":
             return self._get_flac("title")
@@ -88,7 +96,7 @@ class AudioFile:
 
     @title.setter
     def title(self, value: str) -> None:
-        if self._fmt == ".mp3":
+        if self._fmt in (".mp3", ".wav"):
             self._set_id3_text(TIT2, "TIT2", value)
         elif self._fmt == ".flac":
             self._set_flac("title", value)
@@ -97,7 +105,7 @@ class AudioFile:
 
     @property
     def artist(self) -> Optional[str]:
-        if self._fmt == ".mp3":
+        if self._fmt in (".mp3", ".wav"):
             return self._get_id3("TPE1")
         elif self._fmt == ".flac":
             return self._get_flac("artist")
@@ -105,7 +113,7 @@ class AudioFile:
 
     @artist.setter
     def artist(self, value: str) -> None:
-        if self._fmt == ".mp3":
+        if self._fmt in (".mp3", ".wav"):
             self._set_id3_text(TPE1, "TPE1", value)
         elif self._fmt == ".flac":
             self._set_flac("artist", value)
@@ -114,7 +122,7 @@ class AudioFile:
 
     @property
     def album(self) -> Optional[str]:
-        if self._fmt == ".mp3":
+        if self._fmt in (".mp3", ".wav"):
             return self._get_id3("TALB")
         elif self._fmt == ".flac":
             return self._get_flac("album")
@@ -122,7 +130,7 @@ class AudioFile:
 
     @album.setter
     def album(self, value: str) -> None:
-        if self._fmt == ".mp3":
+        if self._fmt in (".mp3", ".wav"):
             self._set_id3_text(TALB, "TALB", value)
         elif self._fmt == ".flac":
             self._set_flac("album", value)
@@ -131,7 +139,7 @@ class AudioFile:
 
     @property
     def year(self) -> Optional[str]:
-        if self._fmt == ".mp3":
+        if self._fmt in (".mp3", ".wav"):
             return self._get_id3("TDRC")
         elif self._fmt == ".flac":
             return self._get_flac("date")
@@ -139,7 +147,7 @@ class AudioFile:
 
     @year.setter
     def year(self, value: str) -> None:
-        if self._fmt == ".mp3":
+        if self._fmt in (".mp3", ".wav"):
             self._set_id3_text(TDRC, "TDRC", value)
         elif self._fmt == ".flac":
             self._set_flac("date", value)
@@ -148,7 +156,7 @@ class AudioFile:
 
     @property
     def track(self) -> Optional[str]:
-        if self._fmt == ".mp3":
+        if self._fmt in (".mp3", ".wav"):
             return self._get_id3("TRCK")
         elif self._fmt == ".flac":
             return self._get_flac("tracknumber")
@@ -160,7 +168,7 @@ class AudioFile:
 
     @track.setter
     def track(self, value: str) -> None:
-        if self._fmt == ".mp3":
+        if self._fmt in (".mp3", ".wav"):
             self._set_id3_text(TRCK, "TRCK", value)
         elif self._fmt == ".flac":
             self._set_flac("tracknumber", value)
@@ -172,7 +180,7 @@ class AudioFile:
 
     @property
     def genre(self) -> Optional[str]:
-        if self._fmt == ".mp3":
+        if self._fmt in (".mp3", ".wav"):
             return self._get_id3("TCON")
         elif self._fmt == ".flac":
             return self._get_flac("genre")
@@ -180,7 +188,7 @@ class AudioFile:
 
     @genre.setter
     def genre(self, value: str) -> None:
-        if self._fmt == ".mp3":
+        if self._fmt in (".mp3", ".wav"):
             self._set_id3_text(TCON, "TCON", value)
         elif self._fmt == ".flac":
             self._set_flac("genre", value)
@@ -189,7 +197,7 @@ class AudioFile:
 
     @property
     def has_artwork(self) -> bool:
-        if self._fmt == ".mp3":
+        if self._fmt in (".mp3", ".wav"):
             return any(k.startswith("APIC") for k in self._tag.keys())
         elif self._fmt == ".flac":
             return len(self._tag.pictures) > 0
@@ -201,7 +209,7 @@ class AudioFile:
 
     def set_artwork(self, image_data: bytes, mime_type: str = "image/jpeg") -> None:
         """Embed cover art into the file."""
-        if self._fmt == ".mp3":
+        if self._fmt in (".mp3", ".wav"):
             # Remove any existing artwork frames
             self._tag.delall("APIC")
             self._tag["APIC"] = APIC(
@@ -235,6 +243,8 @@ class AudioFile:
         """Write all pending changes back to disk."""
         if self._fmt == ".mp3":
             self._tag.save(str(self.path))
+        elif self._fmt == ".wav":
+            self._wave.save()
         else:
             self._tag.save()
 

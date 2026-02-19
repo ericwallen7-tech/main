@@ -43,6 +43,25 @@ def _make_flac(path: Path) -> Path:
     return path
 
 
+def _make_wav(path: Path) -> Path:
+    """Write a minimal valid WAV file (silent, 1-channel, 44100 Hz, 16-bit PCM)."""
+    fmt_chunk = (
+        b"fmt "
+        + struct.pack("<I", 16)    # chunk size
+        + struct.pack("<H", 1)     # PCM format
+        + struct.pack("<H", 1)     # channels
+        + struct.pack("<I", 44100) # sample rate
+        + struct.pack("<I", 88200) # byte rate
+        + struct.pack("<H", 2)     # block align
+        + struct.pack("<H", 16)    # bits per sample
+    )
+    data_chunk = b"data" + struct.pack("<I", 0)
+    body = b"WAVE" + fmt_chunk + data_chunk
+    riff = b"RIFF" + struct.pack("<I", len(body)) + body
+    path.write_bytes(riff)
+    return path
+
+
 def _make_m4a(path: Path) -> Path:
     """Write a minimal M4A/MP4 container (ftyp box only)."""
     ftyp = b"M4A " + b"\x00" * 4 + b"M4A " + b"mp42" + b"isom"
@@ -73,6 +92,11 @@ def flac_file(tmp_dir):
     return _make_flac(tmp_dir / "track.flac")
 
 
+@pytest.fixture()
+def wav_file(tmp_dir):
+    return _make_wav(tmp_dir / "track.wav")
+
+
 # ---------------------------------------------------------------------------
 # SUPPORTED_EXTENSIONS
 # ---------------------------------------------------------------------------
@@ -82,6 +106,7 @@ def test_supported_extensions_includes_common_formats():
     assert ".mp3" in SUPPORTED_EXTENSIONS
     assert ".flac" in SUPPORTED_EXTENSIONS
     assert ".m4a" in SUPPORTED_EXTENSIONS
+    assert ".wav" in SUPPORTED_EXTENSIONS
 
 
 # ---------------------------------------------------------------------------
@@ -90,10 +115,10 @@ def test_supported_extensions_includes_common_formats():
 
 
 def test_unsupported_format_raises(tmp_dir):
-    wav = tmp_dir / "audio.wav"
-    wav.write_bytes(b"RIFF\x00\x00\x00\x00WAVE")
+    ogg = tmp_dir / "audio.ogg"
+    ogg.write_bytes(b"OggS\x00" + b"\x00" * 23)
     with pytest.raises(ValueError, match="Unsupported format"):
-        AudioFile(wav)
+        AudioFile(ogg)
 
 
 # ---------------------------------------------------------------------------
@@ -200,3 +225,46 @@ class TestFLAC:
     def test_has_artwork_false_initially(self, flac_file):
         af = AudioFile(flac_file)
         assert af.has_artwork is False
+
+
+# ---------------------------------------------------------------------------
+# AudioFile – WAV
+# ---------------------------------------------------------------------------
+
+
+class TestWAV:
+    def test_initial_tags_are_none(self, wav_file):
+        af = AudioFile(wav_file)
+        assert af.title is None
+        assert af.artist is None
+        assert af.album is None
+        assert af.year is None
+        assert af.track is None
+        assert af.genre is None
+
+    def test_set_and_save_fields(self, wav_file):
+        af = AudioFile(wav_file)
+        af.title = "WAV Track"
+        af.artist = "WAV Artist"
+        af.album = "WAV Album"
+        af.year = "2025"
+        af.track = "3"
+        af.genre = "Electronic"
+        af.save()
+
+        r = AudioFile(wav_file)
+        assert r.title == "WAV Track"
+        assert r.artist == "WAV Artist"
+        assert r.album == "WAV Album"
+        assert r.year == "2025"
+        assert r.track == "3"
+        assert r.genre == "Electronic"
+
+    def test_has_artwork_false_initially(self, wav_file):
+        af = AudioFile(wav_file)
+        assert af.has_artwork is False
+
+    def test_to_dict_keys(self, wav_file):
+        af = AudioFile(wav_file)
+        d = af.to_dict()
+        assert set(d.keys()) == {"title", "artist", "album", "year", "track", "genre", "has_artwork"}
