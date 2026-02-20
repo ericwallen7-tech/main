@@ -11,6 +11,10 @@ const state = {
   queueIndex:     -1,
   currentTrack:   null,
   isPlaying:      false,
+  shuffle:        false,
+  repeat:         false,
+  sortKey:        null,      // field name or null
+  sortDir:        1,         // 1 = asc, -1 = desc
 };
 
 // ── DOM refs ─────────────────────────────────────────────────────
@@ -41,6 +45,8 @@ const btnNewPl          = document.getElementById('btn-new-playlist');
 const deviceList        = document.getElementById('device-list');
 const btnRefreshDevices = document.getElementById('btn-refresh-devices');
 const btnFetchArtAll    = document.getElementById('btn-fetch-art-all');
+const btnShuffle        = document.getElementById('btn-shuffle');
+const btnRepeat         = document.getElementById('btn-repeat');
 
 // Edit modal
 const editOverlay      = document.getElementById('edit-overlay');
@@ -56,6 +62,8 @@ const editAlbum        = document.getElementById('edit-album');
 const editYear         = document.getElementById('edit-year');
 const editTrackNum     = document.getElementById('edit-track');
 const editGenre        = document.getElementById('edit-genre');
+const editArtFile      = document.getElementById('edit-art-file');
+const editArtUploadBtn = document.getElementById('edit-art-upload-btn');
 
 // ── Utilities ────────────────────────────────────────────────────
 
@@ -342,6 +350,33 @@ editSave.addEventListener('click', saveEdit);
 editLookupBtn.addEventListener('click', doLookup);
 editLookupQ.addEventListener('keydown', e => { if (e.key === 'Enter') doLookup(); });
 
+// Artwork upload wiring
+editArtUploadBtn.addEventListener('click', async () => {
+  if (!editTrack) return;
+  const file = editArtFile.files?.[0];
+  if (!file) { showToast('Select an image file first'); return; }
+  editArtUploadBtn.disabled = true;
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const res = await fetch(`/api/tracks/${editTrack.id}/set-art`, { method: 'POST', body: form });
+    if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+    showToast('Artwork updated');
+    editArtFile.value = '';
+    if (state.view === 'library') await loadLibrary(searchInput.value.trim());
+    else await loadPlaylist(state.view);
+    // Refresh now-playing art if this is the current track
+    if (state.currentTrack?.id === editTrack.id) {
+      state.currentTrack.has_artwork = true;
+      updateNowPlaying();
+    }
+  } catch (err) {
+    showToast(`Art upload failed: ${err.message}`);
+  } finally {
+    editArtUploadBtn.disabled = false;
+  }
+});
+
 async function fetchArtForTrack(track) {
   try {
     await api('POST', `/tracks/${track.id}/fetch-art`);
@@ -381,12 +416,15 @@ function renderTracks(tracks, { showRemove = false, playlistId = null } = {}) {
       <td class="col-album">${esc(track.album || '—')}</td>
       <td class="col-year">${esc(track.year || '—')}</td>
       <td class="col-dur">${fmtDur(track.duration_secs)}</td>
+      <td class="col-plays">${track.play_count ?? 0}</td>
       <td class="col-actions">
         <button class="btn-row btn-add"  title="Add to playlist">+</button>
         <button class="btn-row btn-edit" title="Edit metadata">✏</button>
         <button class="btn-row btn-art"  title="Fetch artwork">🎨</button>
         <button class="btn-row btn-copy" title="Copy to device">💾</button>
-        ${showRemove ? `<button class="btn-row btn-rm" title="Remove from playlist">✕</button>` : ''}
+        ${showRemove
+          ? `<button class="btn-row btn-rm"  title="Remove from playlist">✕</button>`
+          : `<button class="btn-row btn-del" title="Delete from library">🗑</button>`}
       </td>
     `;
 
@@ -426,6 +464,19 @@ function renderTracks(tracks, { showRemove = false, playlistId = null } = {}) {
         await api('DELETE', `/playlists/${playlistId}/tracks/${track.id}`);
         showToast('Removed from playlist');
         await loadPlaylist(playlistId);
+      });
+    } else {
+      // Delete from library button (library view only)
+      tr.querySelector('.btn-del').addEventListener('click', async e => {
+        e.stopPropagation();
+        if (!confirm(`Remove "${track.title || track.path}" from library?`)) return;
+        try {
+          await api('DELETE', `/tracks/${track.id}`);
+          showToast('Track removed from library');
+          await loadLibrary(searchInput.value.trim());
+        } catch (err) {
+          showToast(`Delete failed: ${err.message}`);
+        }
       });
     }
 
@@ -496,6 +547,9 @@ function playTrack(track, queue = null, index = 0) {
   state.isPlaying = true;
   updateNowPlaying();
   highlightCurrentRow();
+
+  // Record play (fire-and-forget)
+  api('POST', `/tracks/${track.id}/played`).catch(() => {});
 }
 
 function updateNowPlaying() {
@@ -518,7 +572,17 @@ function updateNowPlaying() {
 
 function playNext() {
   if (!state.queue.length) return;
-  state.queueIndex = (state.queueIndex + 1) % state.queue.length;
+  if (state.repeat) {
+    // Replay the current track from the start
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+    return;
+  }
+  if (state.shuffle) {
+    state.queueIndex = Math.floor(Math.random() * state.queue.length);
+  } else {
+    state.queueIndex = (state.queueIndex + 1) % state.queue.length;
+  }
   playTrack(state.queue[state.queueIndex], state.queue, state.queueIndex);
 }
 
@@ -668,6 +732,50 @@ btnFetchArtAll.addEventListener('click', async () => {
   } finally {
     btnFetchArtAll.disabled = false;
   }
+});
+
+// ── Shuffle / Repeat ──────────────────────────────────────────────
+
+btnShuffle.addEventListener('click', () => {
+  state.shuffle = !state.shuffle;
+  btnShuffle.classList.toggle('active', state.shuffle);
+  showToast(state.shuffle ? 'Shuffle on' : 'Shuffle off');
+});
+
+btnRepeat.addEventListener('click', () => {
+  state.repeat = !state.repeat;
+  btnRepeat.classList.toggle('active', state.repeat);
+  showToast(state.repeat ? 'Repeat on' : 'Repeat off');
+});
+
+// ── Column sort ───────────────────────────────────────────────────
+
+document.getElementById('track-table').addEventListener('click', e => {
+  const th = e.target.closest('th[data-sort]');
+  if (!th) return;
+  const key = th.dataset.sort;
+  if (state.sortKey === key) {
+    state.sortDir *= -1;
+  } else {
+    state.sortKey = key;
+    state.sortDir = 1;
+  }
+  // Update sort indicators
+  document.querySelectorAll('th[data-sort]').forEach(el => {
+    el.classList.remove('sort-asc', 'sort-desc');
+    if (el.dataset.sort === state.sortKey) {
+      el.classList.add(state.sortDir === 1 ? 'sort-asc' : 'sort-desc');
+    }
+  });
+  // Sort the current track list and re-render
+  const sorted = [...state.tracks].sort((a, b) => {
+    const av = a[key] ?? '';
+    const bv = b[key] ?? '';
+    if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * state.sortDir;
+    return String(av).localeCompare(String(bv), undefined, { numeric: true }) * state.sortDir;
+  });
+  const showRemove = typeof state.view === 'number';
+  renderTracks(sorted, { showRemove, playlistId: showRemove ? state.view : null });
 });
 
 // ── Keyboard shortcuts ────────────────────────────────────────────

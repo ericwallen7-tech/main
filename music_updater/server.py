@@ -21,9 +21,11 @@ from .db import (
     add_track_to_playlist,
     create_playlist,
     delete_playlist,
+    delete_track,
     get_conn,
     get_playlist,
     get_track,
+    increment_play_count,
     index_directory,
     index_file,
     init_db,
@@ -206,6 +208,45 @@ async def update_track_metadata(track_id: int, req: UpdateTrackRequest) -> dict:
         index_file(path, conn)
 
     return get_track(track_id)  # type: ignore[return-value]
+
+
+@app.delete("/api/tracks/{track_id}", status_code=204)
+async def delete_track_endpoint(track_id: int) -> None:
+    """Remove a track from the library index (does not delete the file from disk)."""
+    if not delete_track(track_id):
+        raise HTTPException(status_code=404, detail="Track not found")
+
+
+@app.post("/api/tracks/{track_id}/played", status_code=204)
+async def mark_played(track_id: int) -> None:
+    """Increment the play count for a track."""
+    if not get_track(track_id):
+        raise HTTPException(status_code=404, detail="Track not found")
+    increment_play_count(track_id)
+
+
+@app.post("/api/tracks/{track_id}/set-art")
+async def set_track_art(track_id: int, file: UploadFile = File(...)) -> dict:
+    """Embed an uploaded image as the artwork for a track."""
+    track = get_track(track_id)
+    if not track:
+        raise HTTPException(status_code=404, detail="Track not found")
+    path = Path(track["path"])
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="File missing from disk")
+
+    mime = file.content_type or "image/jpeg"
+    if not mime.startswith("image/"):
+        raise HTTPException(status_code=422, detail="Uploaded file is not an image")
+
+    image_data = await file.read()
+    af = AudioFile(path)
+    af.set_artwork(image_data, mime)
+    af.save()
+    with get_conn() as conn:
+        index_file(path, conn)
+
+    return {"ok": True, "bytes": len(image_data), "mime_type": mime}
 
 
 _ITUNES_SEARCH_URL = "https://itunes.apple.com/search"

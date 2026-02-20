@@ -863,3 +863,68 @@ body.has-device tr.playing .btn-copy { opacity: 1; }
   width: 16px;
 }
 ::-webkit-scrollbar-corner { background: var(--face); }
+
+/* ── Shuffle / Repeat active state ───────────────────────────── */
+#btn-shuffle, #btn-repeat {
+  font-size: 14px;
+}
+#btn-shuffle.active, #btn-repeat.active {
+  background: var(--hi-bg);
+  color: var(--hi-text);
+  border-color: var(--dk-shadow) var(--white) var(--white) var(--dk-shadow);
+  box-shadow: inset 1px 1px 0 var(--shadow), inset -1px -1px 0 var(--highlight);
+}
+
+/* ── Sortable column headers ─────────────────────────────────── */
+th[data-sort] {
+  cursor: pointer;
+  user-select: none;
+}
+th[data-sort]:hover { background: var(--highlight); }
+th[data-sort]::after { content: ''; margin-left: 4px; }
+th[data-sort].sort-asc::after  { content: '▲'; font-size: 8px; }
+th[data-sort].sort-desc::after { content: '▼'; font-size: 8px; }
+
+/* ── Plays column ────────────────────────────────────────────── */
+.col-plays { width: 44px; text-align: right; font-size: 11px; }
+
+/* ── Delete-from-library button ──────────────────────────────── */
+.btn-row.btn-del { color: #800000; }
+
+/* ── Artwork upload row in edit modal ────────────────────────── */
+.modal-art-upload {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid var(--shadow);
+  padding-top: 8px;
+  font-size: 11px;
+}
+.modal-art-upload label { flex-shrink: 0; }
+.modal-art-upload input[type=file] {
+  flex: 1;
+  font-size: 10px;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+  border: 1px solid var(--shadow);
+  background: var(--white);
+  padding: 1px 2px;
+  min-width: 0;
+}
+.modal-art-upload button {
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow);
+  color: var(--text);
+  padding: 2px 8px;
+  font-size: 11px;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.modal-art-upload button:active {
+  border-color: var(--dk-shadow) var(--white) var(--white) var(--dk-shadow);
+  box-shadow: inset 1px 1px 0 var(--shadow), inset -1px -1px 0 var(--highlight);
+}
+.modal-art-upload button:disabled { opacity: 0.5; cursor: default; }

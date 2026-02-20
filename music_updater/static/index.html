@@ -95,11 +95,12 @@
               <tr>
                 <th class="col-num">#</th>
                 <th class="col-art"></th>
-                <th class="col-title">Title</th>
-                <th class="col-artist">Artist</th>
-                <th class="col-album">Album</th>
-                <th class="col-year">Year</th>
-                <th class="col-dur">Duration</th>
+                <th class="col-title" data-sort="title">Title</th>
+                <th class="col-artist" data-sort="artist">Artist</th>
+                <th class="col-album" data-sort="album">Album</th>
+                <th class="col-year" data-sort="year">Year</th>
+                <th class="col-dur" data-sort="duration_secs">Duration</th>
+                <th class="col-plays" data-sort="play_count">Plays</th>
                 <th class="col-actions"></th>
               </tr>
             </thead>
@@ -127,9 +128,11 @@
 
       <div id="np-center">
         <div id="np-buttons">
+          <button id="btn-shuffle" title="Shuffle">⇀</button>
           <button id="btn-prev" title="Previous">⏮</button>
           <button id="btn-play" title="Play / Pause" class="btn-play-main">▶</button>
           <button id="btn-next" title="Next">⏭</button>
+          <button id="btn-repeat" title="Repeat">↻</button>
         </div>
         <div id="np-progress">
           <span id="np-cur">0:00</span>
@@ -169,6 +172,13 @@
             <button id="edit-lookup-btn">Search</button>
           </div>
           <div id="edit-lookup-results"></div>
+        </div>
+
+        <!-- Artwork upload -->
+        <div class="modal-art-upload">
+          <label for="edit-art-file">Upload artwork:</label>
+          <input id="edit-art-file" type="file" accept="image/*" />
+          <button id="edit-art-upload-btn">Set Art</button>
         </div>
 
         <!-- Tag fields -->

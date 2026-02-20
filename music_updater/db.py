@@ -53,7 +53,8 @@ def init_db(db_path: Path = DB_PATH) -> None:
                 has_artwork     INTEGER DEFAULT 0,
                 duration_secs   REAL,
                 file_size_bytes INTEGER,
-                date_indexed    TEXT    NOT NULL
+                date_indexed    TEXT    NOT NULL,
+                play_count      INTEGER DEFAULT 0
             );
 
             CREATE TABLE IF NOT EXISTS playlists (
@@ -75,6 +76,10 @@ def init_db(db_path: Path = DB_PATH) -> None:
             CREATE INDEX IF NOT EXISTS idx_tracks_title  ON tracks(title  COLLATE NOCASE);
             CREATE INDEX IF NOT EXISTS idx_pt_playlist   ON playlist_tracks(playlist_id);
         """)
+        # Schema migration: add play_count if the DB predates it
+        existing = {row[1] for row in conn.execute("PRAGMA table_info(tracks)")}
+        if "play_count" not in existing:
+            conn.execute("ALTER TABLE tracks ADD COLUMN play_count INTEGER DEFAULT 0")
 
 
 # ---------------------------------------------------------------------------
@@ -185,6 +190,22 @@ def get_track(track_id: int, db_path: Path = DB_PATH) -> Optional[dict]:
     with get_conn(db_path) as conn:
         row = conn.execute("SELECT * FROM tracks WHERE id = ?", (track_id,)).fetchone()
     return dict(row) if row else None
+
+
+def delete_track(track_id: int, db_path: Path = DB_PATH) -> bool:
+    """Remove a track from the library index. Returns True if a row was deleted."""
+    with get_conn(db_path) as conn:
+        cur = conn.execute("DELETE FROM tracks WHERE id = ?", (track_id,))
+    return cur.rowcount > 0
+
+
+def increment_play_count(track_id: int, db_path: Path = DB_PATH) -> None:
+    """Increment play_count for the given track."""
+    with get_conn(db_path) as conn:
+        conn.execute(
+            "UPDATE tracks SET play_count = COALESCE(play_count, 0) + 1 WHERE id = ?",
+            (track_id,),
+        )
 
 
 # ---------------------------------------------------------------------------
