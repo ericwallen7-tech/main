@@ -234,6 +234,9 @@ async def lookup_metadata(q: str = Query(..., description="Free-text search")) -
             "artwork_url": (r.get("artworkUrl100") or "").replace("100x100bb", "300x300bb"),
         })
     return results
+
+
+@app.post("/api/tracks/{track_id}/fetch-art")
 async def fetch_track_art(track_id: int) -> dict:
     """Fetch artwork from iTunes/MusicBrainz and embed it into the file."""
     track = get_track(track_id)
