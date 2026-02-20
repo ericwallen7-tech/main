@@ -928,3 +928,39 @@ th[data-sort].sort-desc::after { content: '▼'; font-size: 8px; }
   box-shadow: inset 1px 1px 0 var(--shadow), inset -1px -1px 0 var(--highlight);
 }
 .modal-art-upload button:disabled { opacity: 0.5; cursor: default; }
+
+/* ── Multi-select checkbox column ────────────────────────────── */
+.col-cb { width: 24px; text-align: center; padding: 2px 4px !important; }
+.col-cb input[type=checkbox] { cursor: pointer; margin: 0; }
+
+/* ── Bulk action bar ─────────────────────────────────────────── */
+#bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+#bulk-count { font-size: 11px; white-space: nowrap; }
+#bulk-bar button {
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--white) var(--dk-shadow) var(--dk-shadow) var(--white);
+  box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow);
+  color: var(--text);
+  padding: 2px 8px;
+  font-size: 11px;
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#bulk-bar button:active {
+  border-color: var(--dk-shadow) var(--white) var(--white) var(--dk-shadow);
+  box-shadow: inset 1px 1px 0 var(--shadow), inset -1px -1px 0 var(--highlight);
+}
+
+/* ── Bulk edit modal hint ─────────────────────────────────────── */
+.bulk-hint {
+  font-size: 10px;
+  color: var(--shadow);
+  margin-bottom: 4px;
+}

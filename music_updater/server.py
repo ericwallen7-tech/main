@@ -210,6 +210,40 @@ async def update_track_metadata(track_id: int, req: UpdateTrackRequest) -> dict:
     return get_track(track_id)  # type: ignore[return-value]
 
 
+class BulkUpdateRequest(BaseModel):
+    track_ids: List[int]
+    artist: Optional[str] = None
+    album:  Optional[str] = None
+    year:   Optional[str] = None
+    genre:  Optional[str] = None
+
+
+@app.put("/api/tracks/bulk-update")
+async def bulk_update_tracks(req: BulkUpdateRequest) -> dict:
+    """Write shared metadata fields to multiple audio files at once."""
+    updated = 0
+    errors: list[dict] = []
+    for track_id in req.track_ids:
+        track = get_track(track_id)
+        if not track:
+            errors.append({"id": track_id, "reason": "not found"})
+            continue
+        path = Path(track["path"])
+        if not path.exists():
+            errors.append({"id": track_id, "reason": "file missing"})
+            continue
+        af = AudioFile(path)
+        if req.artist is not None: af.artist = req.artist
+        if req.album  is not None: af.album  = req.album
+        if req.year   is not None: af.year   = req.year
+        if req.genre  is not None: af.genre  = req.genre
+        af.save()
+        with get_conn() as conn:
+            index_file(path, conn)
+        updated += 1
+    return {"updated": updated, "errors": errors}
+
+
 @app.delete("/api/tracks/{track_id}", status_code=204)
 async def delete_track_endpoint(track_id: int) -> None:
     """Remove a track from the library index (does not delete the file from disk)."""

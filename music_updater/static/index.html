@@ -87,12 +87,18 @@
             <button id="btn-clear-search" title="Clear">✕</button>
           </div>
           <span id="track-count"></span>
+          <div id="bulk-bar" class="hidden">
+            <span id="bulk-count"></span>
+            <button id="btn-bulk-edit">Edit Metadata</button>
+            <button id="btn-bulk-clear">Clear</button>
+          </div>
         </div>
 
         <div id="track-list-container">
           <table id="track-table">
             <thead>
               <tr>
+                <th class="col-cb"><input type="checkbox" id="select-all-cb" title="Select all" /></th>
                 <th class="col-num">#</th>
                 <th class="col-art"></th>
                 <th class="col-title" data-sort="title">Title</th>
@@ -212,6 +218,48 @@
         <div class="modal-footer">
           <button id="edit-save">Save</button>
           <button id="edit-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk edit metadata modal -->
+  <div id="bulk-overlay" class="modal-overlay hidden">
+    <div id="bulk-win" class="modal-win">
+      <div class="modal-titlebar">
+        <span>Edit Selected Tracks</span>
+        <button id="bulk-close" class="win-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-lookup">
+          <div class="modal-lookup-row">
+            <input id="bulk-lookup-q" type="text" placeholder="Search iTunes for album info…" />
+            <button id="bulk-lookup-btn">Search</button>
+          </div>
+          <div id="bulk-lookup-results"></div>
+        </div>
+        <div class="modal-fields">
+          <p class="bulk-hint">Only filled fields will be updated. Leave blank to keep existing values.</p>
+          <div class="modal-field-row">
+            <label for="bulk-artist">Artist</label>
+            <input id="bulk-artist" type="text" placeholder="(leave blank to skip)" />
+          </div>
+          <div class="modal-field-row">
+            <label for="bulk-album">Album</label>
+            <input id="bulk-album" type="text" placeholder="(leave blank to skip)" />
+          </div>
+          <div class="modal-field-row">
+            <label for="bulk-year">Year</label>
+            <input id="bulk-year" type="text" style="width:60px" placeholder="—" />
+          </div>
+          <div class="modal-field-row">
+            <label for="bulk-genre">Genre</label>
+            <input id="bulk-genre" type="text" placeholder="(leave blank to skip)" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="bulk-save">Save All</button>
+          <button id="bulk-cancel">Cancel</button>
         </div>
       </div>
     </div>

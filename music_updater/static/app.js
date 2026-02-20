@@ -15,6 +15,7 @@ const state = {
   repeat:         false,
   sortKey:        null,      // field name or null
   sortDir:        1,         // 1 = asc, -1 = desc
+  selectedIds:    new Set(), // multi-selected track IDs
 };
 
 // ── DOM refs ─────────────────────────────────────────────────────
@@ -47,6 +48,26 @@ const btnRefreshDevices = document.getElementById('btn-refresh-devices');
 const btnFetchArtAll    = document.getElementById('btn-fetch-art-all');
 const btnShuffle        = document.getElementById('btn-shuffle');
 const btnRepeat         = document.getElementById('btn-repeat');
+
+// Select-all checkbox & bulk bar
+const selectAllCb   = document.getElementById('select-all-cb');
+const bulkBar       = document.getElementById('bulk-bar');
+const bulkCount     = document.getElementById('bulk-count');
+const btnBulkEdit   = document.getElementById('btn-bulk-edit');
+const btnBulkClear  = document.getElementById('btn-bulk-clear');
+
+// Bulk edit modal
+const bulkOverlay   = document.getElementById('bulk-overlay');
+const bulkClose     = document.getElementById('bulk-close');
+const bulkCancel    = document.getElementById('bulk-cancel');
+const bulkSave      = document.getElementById('bulk-save');
+const bulkLookupQ   = document.getElementById('bulk-lookup-q');
+const bulkLookupBtn = document.getElementById('bulk-lookup-btn');
+const bulkLookupRes = document.getElementById('bulk-lookup-results');
+const bulkArtist    = document.getElementById('bulk-artist');
+const bulkAlbum     = document.getElementById('bulk-album');
+const bulkYear      = document.getElementById('bulk-year');
+const bulkGenre     = document.getElementById('bulk-genre');
 
 // Edit modal
 const editOverlay      = document.getElementById('edit-overlay');
@@ -377,6 +398,121 @@ editArtUploadBtn.addEventListener('click', async () => {
   }
 });
 
+// ── Select-all checkbox ───────────────────────────────────────────
+
+selectAllCb.addEventListener('change', () => {
+  if (selectAllCb.checked) {
+    state.tracks.forEach(t => state.selectedIds.add(t.id));
+  } else {
+    state.tracks.forEach(t => state.selectedIds.delete(t.id));
+  }
+  // Sync visible row checkboxes
+  document.querySelectorAll('#track-tbody .row-cb').forEach((cb, i) => {
+    cb.checked = selectAllCb.checked;
+  });
+  updateBulkBar();
+});
+
+// ── Bulk edit modal ───────────────────────────────────────────────
+
+function openBulkEditModal() {
+  bulkArtist.value = '';
+  bulkAlbum.value  = '';
+  bulkYear.value   = '';
+  bulkGenre.value  = '';
+  bulkLookupQ.value = '';
+  bulkLookupRes.innerHTML = '';
+  bulkLookupRes.classList.remove('has-results');
+  bulkOverlay.classList.remove('hidden');
+  bulkArtist.focus();
+}
+
+function closeBulkEditModal() {
+  bulkOverlay.classList.add('hidden');
+}
+
+function populateBulkForm(candidate) {
+  if (candidate.artist) bulkArtist.value = candidate.artist;
+  if (candidate.album)  bulkAlbum.value  = candidate.album;
+  if (candidate.year)   bulkYear.value   = candidate.year;
+  if (candidate.genre)  bulkGenre.value  = candidate.genre;
+  bulkLookupRes.classList.remove('has-results');
+}
+
+async function doBulkLookup() {
+  const q = bulkLookupQ.value.trim();
+  if (!q) return;
+  bulkLookupBtn.disabled = true;
+  bulkLookupBtn.textContent = '…';
+  try {
+    const results = await api('GET', `/library/lookup?q=${encodeURIComponent(q)}`);
+    bulkLookupRes.innerHTML = '';
+    if (!results.length) {
+      bulkLookupRes.innerHTML = '<div class="lookup-empty">No results found</div>';
+    } else {
+      results.forEach(r => {
+        const div = document.createElement('div');
+        div.className = 'lookup-item';
+        div.innerHTML = `
+          ${r.artwork_url ? `<img src="${esc(r.artwork_url)}" alt="" onerror="this.style.display='none'" />` : ''}
+          <div class="lookup-item-meta">
+            <div class="lookup-item-title">${esc(r.title || '—')}</div>
+            <div class="lookup-item-sub">${esc(r.artist)}${r.album ? ' · ' + esc(r.album) : ''}${r.year ? ' (' + esc(r.year) + ')' : ''}</div>
+          </div>
+        `;
+        div.addEventListener('click', () => populateBulkForm(r));
+        bulkLookupRes.appendChild(div);
+      });
+    }
+    bulkLookupRes.classList.add('has-results');
+  } catch (e) {
+    bulkLookupRes.innerHTML = `<div class="lookup-empty">Lookup error: ${esc(e.message)}</div>`;
+    bulkLookupRes.classList.add('has-results');
+  } finally {
+    bulkLookupBtn.disabled = false;
+    bulkLookupBtn.textContent = 'Search';
+  }
+}
+
+async function saveBulkEdit() {
+  const ids = [...state.selectedIds];
+  if (!ids.length) return;
+  bulkSave.disabled = true;
+  try {
+    const res = await api('PUT', '/tracks/bulk-update', {
+      track_ids: ids,
+      artist: bulkArtist.value.trim() || null,
+      album:  bulkAlbum.value.trim()  || null,
+      year:   bulkYear.value.trim()   || null,
+      genre:  bulkGenre.value.trim()  || null,
+    });
+    showToast(`Updated ${res.updated} track${res.updated !== 1 ? 's' : ''}`);
+    closeBulkEditModal();
+    if (state.view === 'library') await loadLibrary(searchInput.value.trim());
+    else await loadPlaylist(state.view);
+  } catch (e) {
+    showToast(`Bulk save failed: ${e.message}`);
+  } finally {
+    bulkSave.disabled = false;
+  }
+}
+
+// Bulk modal event wiring
+bulkClose.addEventListener('click', closeBulkEditModal);
+bulkCancel.addEventListener('click', closeBulkEditModal);
+bulkOverlay.addEventListener('click', e => { if (e.target === bulkOverlay) closeBulkEditModal(); });
+bulkSave.addEventListener('click', saveBulkEdit);
+bulkLookupBtn.addEventListener('click', doBulkLookup);
+bulkLookupQ.addEventListener('keydown', e => { if (e.key === 'Enter') doBulkLookup(); });
+
+// Bulk bar buttons
+btnBulkEdit.addEventListener('click', openBulkEditModal);
+btnBulkClear.addEventListener('click', () => {
+  state.selectedIds.clear();
+  document.querySelectorAll('#track-tbody .row-cb').forEach(cb => { cb.checked = false; });
+  updateBulkBar();
+});
+
 async function fetchArtForTrack(track) {
   try {
     await api('POST', `/tracks/${track.id}/fetch-art`);
@@ -390,7 +526,19 @@ async function fetchArtForTrack(track) {
 
 // ── Render: track table ──────────────────────────────────────────
 
+function updateBulkBar() {
+  const n = state.selectedIds.size;
+  bulkBar.classList.toggle('hidden', n === 0);
+  bulkCount.textContent = `${n} selected`;
+  // Sync select-all checkbox
+  const visibleIds = state.tracks.map(t => t.id);
+  const selectedVisible = visibleIds.filter(id => state.selectedIds.has(id)).length;
+  selectAllCb.indeterminate = selectedVisible > 0 && selectedVisible < visibleIds.length;
+  selectAllCb.checked = visibleIds.length > 0 && selectedVisible === visibleIds.length;
+}
+
 function renderTracks(tracks, { showRemove = false, playlistId = null } = {}) {
+  state.selectedIds.clear();
   tbody.innerHTML = '';
   const isEmpty = tracks.length === 0;
   emptyState.classList.toggle('hidden', !isEmpty);
@@ -403,6 +551,7 @@ function renderTracks(tracks, { showRemove = false, playlistId = null } = {}) {
     if (state.currentTrack?.id === track.id) tr.classList.add('playing');
 
     tr.innerHTML = `
+      <td class="col-cb"><input type="checkbox" class="row-cb" /></td>
       <td class="col-num">
         <span class="playing-icon">♪</span>
         <span class="row-num">${i + 1}</span>
@@ -427,6 +576,14 @@ function renderTracks(tracks, { showRemove = false, playlistId = null } = {}) {
           : `<button class="btn-row btn-del" title="Delete from library">🗑</button>`}
       </td>
     `;
+
+    // Checkbox for multi-select
+    tr.querySelector('.row-cb').addEventListener('change', e => {
+      e.stopPropagation();
+      if (e.target.checked) state.selectedIds.add(track.id);
+      else state.selectedIds.delete(track.id);
+      updateBulkBar();
+    });
 
     // Double-click → play track, set queue to current visible list
     tr.addEventListener('dblclick', () => {
@@ -482,6 +639,7 @@ function renderTracks(tracks, { showRemove = false, playlistId = null } = {}) {
 
     tbody.appendChild(tr);
   });
+  updateBulkBar();
 }
 
 function highlightCurrentRow() {
@@ -781,6 +939,10 @@ document.getElementById('track-table').addEventListener('click', e => {
 // ── Keyboard shortcuts ────────────────────────────────────────────
 
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !bulkOverlay.classList.contains('hidden')) {
+    closeBulkEditModal();
+    return;
+  }
   if (e.key === 'Escape' && !editOverlay.classList.contains('hidden')) {
     closeEditModal();
     return;
